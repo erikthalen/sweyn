@@ -1,0 +1,9 @@
+{
+  "name": "sweyn",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "index.ts",
+  "devDependencies": {
+    "ws": "^8.18.0"
+  }
+}

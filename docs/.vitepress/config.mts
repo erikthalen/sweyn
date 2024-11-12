@@ -1,0 +1,29 @@
+import { defineConfig } from 'vitepress'
+
+// https://vitepress.dev/reference/site-config
+export default defineConfig({
+  title: 'sweyn docs',
+  themeConfig: {
+    nav: [
+      { text: 'Home', link: '/' },
+      { text: 'Guide', link: '/getting-started' },
+    ],
+
+    sidebar: [
+      {
+        text: 'Guide',
+        items: [
+          { text: 'Getting started', link: '/getting-started' },
+          { text: 'Config', link: '/config' },
+          { text: 'Directories', link: '/directories' },
+        ],
+      },
+      {
+        text: 'API',
+        items: [
+          { text: 'Renderer', link: '/renderer' },
+        ],
+      },
+    ],
+  },
+})

@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "vitest"
+  },
+  "dependencies": {
+    "sweyn": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.4"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "NODE_ENV=dev node --experimental-strip-types --watch server.config.ts",
+    "start": "node --experimental-strip-types server.config.ts"
+  },
+  "devDependencies": {
+    "ws": "^8.18.0"
+  }
+}
