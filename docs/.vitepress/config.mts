@@ -3,6 +3,8 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: 'sweyn docs',
+  base: '/sweyn/',
+  cleanUrls: true,
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
