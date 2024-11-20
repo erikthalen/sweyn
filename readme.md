@@ -8,7 +8,7 @@ A framework template generator.
 pnpm run dev
 ```
 
-Do development directly in `/packages/sweyn`
+Do development in `/packages/sweyn`
 
 ## deploy
 

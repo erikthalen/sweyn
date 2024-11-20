@@ -3,9 +3,10 @@ import { createServer, renderFile } from 'sweyn'
 createServer({
   routes: [
     {
-      route: '/[slug]',
+      route: '/erik/[slug]/[bar]',
       handler: (req, res, { route }) => {
-        return renderFile('[slug]', { slug: route.slug })
+        console.log(route)
+        return renderFile('[slug]', route)
       },
     },
   ],

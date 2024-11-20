@@ -1,7 +1,15 @@
 import fs from 'node:fs'
 import { WebSocketServer } from 'ws'
 
-const dirs = ['./app', './public', './pages', './snippets', './layouts', '/api']
+const dirs = [
+  './',
+  './app',
+  './public',
+  './pages',
+  './snippets',
+  './layouts',
+  './api',
+]
 
 export function HMRServer(port = 8080) {
   const wss = new WebSocketServer({ port })

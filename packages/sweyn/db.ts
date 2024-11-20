@@ -1,21 +1,24 @@
 import Database from 'better-sqlite3'
-import { routes } from './server.ts'
+import { registerRoute, routes } from './routes.ts'
 
 export function createDatabase(filename = './db.sqlite') {
   const db = new Database(filename)
 
   db.pragma('journal_mode = WAL')
 
-  routes.get('GET').set('/db/backup', async (req, res) => {
-    try {
-      const filename = `./backups/backup-${Date.now()}.db`
+  registerRoute({
+    route: '/db/backup',
+    handler: async (req, res) => {
+      try {
+        const filename = `./backups/backup-${Date.now()}.db`
 
-      await db.backup(filename)
+        await db.backup(filename)
 
-      return { code: 200, message: filename + ' saves successfully!' }
-    } catch (error) {
-      console.log('backup failed:', error)
-    }
+        return { code: 200, message: filename + ' saves successfully!' }
+      } catch (error) {
+        console.log('backup failed:', error)
+      }
+    },
   })
 
   process.on('exit', () => db.close())

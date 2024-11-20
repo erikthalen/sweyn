@@ -67,7 +67,7 @@ export const renderVariables = (fileString, data = {}) => {
   )
 }
 
-export const renderFileString = async (fileString, data) => {
+export const renderFileString = async (fileString, data?) => {
   const layout = await renderLayout(fileString)
   const partial = await renderPartials(layout)
   const result = renderVariables(partial, data)

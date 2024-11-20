@@ -1,27 +1,6 @@
-import fs from 'node:fs'
-import fsPromise from 'node:fs/promises'
 import path from 'path'
-import http from 'node:http'
-
-type RouteHandler = (
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-  options?: Record<string, Record<string, string>>
-) => void
-
-type Route = {
-  method?: string
-  route: string
-  handler: RouteHandler
-}
-
-async function getFilenamesInDirectory(dir) {
-  if (!fs.existsSync(dir)) return
-
-  return await fsPromise.readdir(dir)
-}
-
-const base = './api'
+import type { Route, RouteHandler } from './types.ts'
+import { getFilenamesInDirectory } from './utils.ts'
 
 async function getApiRoutes(dir) {
   const filenames = await getFilenamesInDirectory(dir)
@@ -30,13 +9,13 @@ async function getApiRoutes(dir) {
 
   const endpoints = filenames.map(async filename => {
     const [route, method] = path.parse(filename).name.split('.')
-    const modules = await import(path.resolve(base, filename))
+    const modules = await import(path.resolve(dir, filename))
 
     if (Object.values(modules).length === 1) {
       return [
         {
-          method: method?.toUpperCase() || 'GET',
-          route,
+          method,
+          route: path.join('/api', route),
           handler: Object.values(modules)[0] as RouteHandler,
         },
       ]
@@ -45,11 +24,9 @@ async function getApiRoutes(dir) {
     let result: Route[] = []
 
     for (let module in modules) {
-      const nestedEndpoint = path.join('/', route, module)
-
       result.push({
-        method: method?.toUpperCase() || 'GET',
-        route: nestedEndpoint,
+        method,
+        route: path.join('/api', route, module),
         handler: modules[module] as RouteHandler,
       })
     }
@@ -60,4 +37,4 @@ async function getApiRoutes(dir) {
   return (await Promise.all(endpoints)).flat()
 }
 
-export default await getApiRoutes(base)
+export default getApiRoutes

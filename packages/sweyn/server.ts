@@ -1,7 +1,13 @@
 import http from 'node:http'
 import fs, { createReadStream } from 'node:fs'
-import { normalize, join, resolve, extname } from 'node:path'
+import { join, resolve, extname } from 'node:path'
 import { URL } from 'node:url'
+import {
+  asParts,
+  getMatchingRoute,
+  isWildcard,
+  withoutWildcards,
+} from './routes.ts'
 
 const CONTENT_TYPES = {
   '.html': 'text/html',
@@ -23,69 +29,14 @@ const CONTENT_TYPES = {
 
 export const staticFolders = new Set(['', 'public'])
 
-export const routes = new Map([
-  ['GET', new Map()],
-  ['POST', new Map()],
-  ['PUT', new Map()],
-  ['PATCH', new Map()],
-  ['DELETE', new Map()],
-])
-
 export const middlewares = new Set()
 
-const getRouteHandler = (requestedRoute, method = 'GET') => {
-  try {
-    const result = routes.get(method).get(requestedRoute)
-
-    // found a route exactly matching the requested route
-    if (result) return { handler: result }
-
-    // no exact match, try fuzzy finding a route
-    const [_, ...reqUrlArr] = requestedRoute.split('/')
-
-    let matchedRoutes = []
-
-    routes.get(method).forEach((handler, registeredRoute) => {
-      const [_, ...regUrlArr] = registeredRoute.split('/')
-
-      if (regUrlArr.length !== reqUrlArr.length) return
-      if (!regUrlArr.find(part => part.startsWith('['))) return
-
-      const isMatch = reqUrlArr.every((part, idx) => {
-        return part === regUrlArr[idx] || regUrlArr[idx].startsWith('[')
-      })
-
-      if (!isMatch) return
-
-      const matches = regUrlArr
-        .map(
-          (part, idx) =>
-            part.startsWith('[') && {
-              key: part.replace('[', '').replace(']', ''),
-              value: reqUrlArr[idx],
-            }
-        )
-        .filter(Boolean)
-
-      matchedRoutes.push({ matches, handler })
-    })
-
-    const matchedRoutesSorted = matchedRoutes.toSorted((a, b) => {
-      return a.matches.length - b.matches.length
-    })
-
-    return matchedRoutesSorted.at(0)
-  } catch (error) {
-    throw { status: 404, message: 'No route found' + error }
-  }
-}
-
 const getFileFromFS =
-  (name: string) =>
+  (filename: string) =>
   (path: string): Promise<fs.ReadStream> => {
     return new Promise((res, rej) => {
       try {
-        const stream = createReadStream(join(resolve(path), normalize(name)))
+        const stream = createReadStream(join(path, filename))
         stream.on('error', rej)
         stream.on('open', () => res(stream))
       } catch (error) {
@@ -94,13 +45,16 @@ const getFileFromFS =
     })
   }
 
-export async function streamFile(filename) {
+export async function streamFileFromStaticFolder(filename) {
   try {
     return await Promise.any(
       Array.from(staticFolders).map(getFileFromFS(filename))
     )
   } catch (error) {
-    throw { status: 404, message: 'streamFile dit not find ' + filename }
+    throw {
+      status: 404,
+      message: 'streamFileFromStaticFolder dit not find ' + filename,
+    }
   }
 }
 
@@ -146,43 +100,41 @@ export function createRequestHandler(callback) {
 
       return res.writeHead(200).end(JSON.stringify(result))
     } catch (error) {
-      console.log(error)
+      console.log('error', error)
       res.writeHead(error.status || 500).end(JSON.stringify(error))
     }
   }
 }
 
-export const requestHandler = await createRequestHandler(async (req, res) => {
-  const { method, url, headers } = req
-  const { pathname, searchParams } = new URL('https://' + headers.host + url)
+const requestHandler = await createRequestHandler(async (req, res) => {
+  const { method, url } = req
+  const { pathname, searchParams } = new URL('https://foobar.com' + url)
 
   // is request for a static file?
-  if (extname(normalize(pathname))) {
-    return await streamFile(resolve(url))
+  if (extname(pathname)) {
+    return await streamFileFromStaticFolder(url)
   }
 
-  const result =
-    getRouteHandler(resolve(pathname), method) || getRouteHandler('error')
+  const { route, handler } =
+    getMatchingRoute(pathname, method) || getMatchingRoute('error')
 
-  if (typeof result.handler === 'string')
-    return await streamFile(result.handler)
+  if (!route || !handler) throw { status: 404, message: 'no route found' }
 
-  const handlerFunction = await Promise.resolve(result.handler)
+  const options = {
+    query: Object.fromEntries(searchParams),
+    route: {},
+  }
 
-  if (typeof handlerFunction === 'function') {
-    const options = {
-      query: Object.fromEntries(searchParams),
-      route: {},
+  const urlParts = asParts(url)
+  const routeParts = asParts(route)
+
+  routeParts.forEach((part, idx) => {
+    if (isWildcard(part)) {
+      options.route[withoutWildcards(part)] = urlParts[idx]
     }
+  })
 
-    result.matches?.forEach(match => {
-      options.route[match.key] = match.value
-    })
-
-    return handlerFunction(req, res, options)
-  }
-
-  throw { status: 500, message: 'could not handle request' }
+  return handler(req, res, options)
 })
 
 export const createServer = http.createServer(requestHandler)

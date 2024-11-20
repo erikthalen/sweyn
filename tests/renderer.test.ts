@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { renderFileString } from 'sweyn'
+import { renderFileString } from 'sweyn/renderer'
 
 describe('Renderer should work', () => {
   it('should render a file', async () => {

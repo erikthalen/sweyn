@@ -13,8 +13,6 @@ npm link
 npx create-sweyn-app my-project
 ```
 
-Enter a name for your project, when prompted.
-
 ```sh
 cd my-project
 ```

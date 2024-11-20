@@ -1,41 +1,19 @@
-import fs from 'node:fs'
 import path from 'node:path'
 import http from 'node:http'
-import fsPromise from 'node:fs/promises'
+import fs from 'node:fs/promises'
 import { renderFile, renderVariables } from './renderer.ts'
 import { HMRServer, injectHMR } from './hmr.ts'
-import { createServer, middlewares, routes, staticFolders } from './server.ts'
-import api from './api.ts'
+import { createServer, middlewares, staticFolders } from './server.ts'
+import { registerRoute, withoutWildcards } from './routes.ts'
 import { createCms } from './cms.ts'
+import type { Config } from './types.ts'
+import getApiRoutes from './api.ts'
+import { getFilenamesInDirectory } from './utils.ts'
 
-export type RouteHandler = (
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-  options?: Record<string, Record<string, string>>
-) => void
-
-export type Route = {
-  method?: string
-  route: string
-  handler: RouteHandler
-}
-
-export type Config = {
-  port?: number
-  hmrPort?: number
-  static?: string | string[]
-  cms?: {
-    login: string
-    password: string
-  }
-  plugins?: ((req: http.IncomingMessage, res: http.ServerResponse) => void)[]
-  routes?: Route[]
-}
-
-function defaultHandler(file: string, port?: number) {
-  return async (req: http.IncomingMessage, res: http.ServerResponse) => {
-    const page = await renderFile(file, {
-      [file.replace('[', '').replace(']', '')]: req.url,
+function defaultHandler(filename: string, port?: number) {
+  return async (req: http.IncomingMessage) => {
+    const page = await renderFile(filename, {
+      [withoutWildcards(filename)]: req.url?.toString().substring(1),
     })
 
     if (process.env.NODE_ENV === 'dev') {
@@ -46,17 +24,12 @@ function defaultHandler(file: string, port?: number) {
   }
 }
 
-function registerRoute({ method = 'GET', route, handler }) {
-  routes.get(method)?.set(route, handler)
-}
-
 async function init(config?: Config) {
   const defaults = {
     static: ['app', 'pages', 'sweyn'].concat(config?.static || []),
     pagesDir: './pages',
     snippetsDir: './snippets',
-    snippetsBaseEndpoint: '/snippets',
-    apiBaseEndpoint: '/api',
+    apiDir: './api',
     port: config?.port || 3003,
     hmrPort: config?.hmrPort || 8080,
   }
@@ -83,61 +56,53 @@ async function init(config?: Config) {
     handler: defaultHandler('error', defaults.hmrPort),
   })
 
-  if (fs.existsSync(defaults.pagesDir)) {
-    const files = await fsPromise.readdir(defaults.pagesDir)
-    files.map(file => {
-      const path = file.replace('.html', '')
-      const route = '/' + (path === 'index' ? '' : path)
+  const files = await getFilenamesInDirectory(defaults.pagesDir)
 
-      registerRoute({ route, handler: defaultHandler(path, config?.hmrPort) })
-    })
-  }
+  files
+    .filter(file => file !== 'index.html' && file !== 'error.html')
+    .map(file => {
+      const { name } = path.parse(file)
 
-  /**
-   * register files in /api as routes
-   */
-  api?.forEach(({ method, route, handler }) => {
-    registerRoute({
-      method,
-      route: path.join(defaults.apiBaseEndpoint, route),
-      handler,
+      registerRoute({
+        route: '/' + name,
+        handler: defaultHandler(name, config?.hmrPort),
+      })
     })
-  })
+
+  const apiRoutes = await getApiRoutes(defaults.apiDir)
+
+  apiRoutes?.forEach(registerRoute)
 
   config?.routes?.forEach(item => {
     registerRoute({
-      method: item.method?.toUpperCase(),
+      method: item.method,
       route: item.route,
       handler: item.handler,
     })
   })
 
-  /**
-   * register /snippets/file as routes
-   */
-  if (fs.existsSync(defaults.snippetsDir)) {
-    const snippets = await fsPromise.readdir(defaults.snippetsDir)
+  const snippets = await getFilenamesInDirectory(defaults.snippetsDir)
 
-    snippets.forEach(async snippet => {
-      const name = path.parse(snippet).name
-      const route = path.join(defaults.snippetsBaseEndpoint, name)
+  snippets.forEach(async snippet => {
+    const { name } = path.parse(snippet)
 
-      const handler = async (req, res) => {
-        const { searchParams } = new URL('http://foo.com' + req.url)
-        const data = Object.fromEntries(searchParams.entries())
+    const handler = async (req, res) => {
+      const { searchParams } = new URL('http://foo.com' + req.url)
+      const file = await fs.readFile(path.join(defaults.snippetsDir, snippet))
 
-        const file = await fsPromise.readFile(
-          path.join(defaults.snippetsDir, snippet)
-        )
+      res.setHeader('Content-Type', 'text/html')
 
-        res.setHeader('Content-Type', 'text/html')
+      return renderVariables(
+        file.toString(),
+        Object.fromEntries(searchParams.entries())
+      )
+    }
 
-        return renderVariables(file.toString(), data)
-      }
-
-      registerRoute({ route, handler })
+    registerRoute({
+      route: path.join('/snippets', name),
+      handler,
     })
-  }
+  })
 
   /**
    * start server

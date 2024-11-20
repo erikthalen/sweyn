@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import fsPromise from 'node:fs/promises'
 import path, { resolve } from 'node:path'
-import { routes, streamFile } from './server.ts'
+import { registerRoute, routes } from './routes.ts'
 import { readBody } from './server.ts'
 import { renderVariables } from './renderer.ts'
 
@@ -78,47 +78,68 @@ export function createCms(options) {
     })
   }
 
-  routes.get('GET').set('/admin', renderCms)
-
-  routes.get('GET').set('/admin/[page]', renderCms)
-
-  routes.get('GET').set('/admin/api/pages', (req, res) => {
-    authenticate(req, res, options)
-    return fs.readdirSync(`.${rootDir}`, { encoding: 'utf8' })
+  registerRoute({
+    route: '/admin',
+    handler: renderCms,
   })
 
-  routes.get('GET').set('/admin/api/content', (req, res) => {
-    authenticate(req, res, options)
-    const { searchParams } = new URL('http://foo.com' + req.url)
-    return getContent(searchParams.get('page'))
+  registerRoute({
+    route: '/admin/[page]',
+    handler: renderCms,
   })
 
-  routes.get('GET').set('/admin/api/delete', (req, res) => {
-    authenticate(req, res, options)
-    const { searchParams } = new URL('http://foo.com' + req.url)
-    const filename = searchParams.get('page')
-    const filepath = path.join('.', rootDir, filename)
-    fs.unlinkSync(filepath)
-
-    res.writeHead(301, { Location: '/admin' }).end()
+  registerRoute({
+    route: '/admin/api/pages',
+    handler: (req, res) => {
+      authenticate(req, res, options)
+      return fs.readdirSync(`.${rootDir}`, { encoding: 'utf8' })
+    },
   })
 
-  routes.get('GET').set('/admin/api/new', (req, res) => {
-    authenticate(req, res, options)
-
-    const { searchParams } = new URL('http://foo.com' + req.url)
-    const filename = searchParams.get('filename').replaceAll(' ', '-')
-    fs.writeFileSync(
-      path.join('.', rootDir, filename + '.md'),
-      '# Start typing...'
-    )
-    res.writeHead(301, { Location: '/admin/' + filename }).end()
+  registerRoute({
+    route: '/admin/api/content',
+    handler: (req, res) => {
+      authenticate(req, res, options)
+      const { searchParams } = new URL('http://foo.com' + req.url)
+      return getContent(searchParams.get('page'))
+    },
   })
 
-  routes.get('POST').set('/admin/api/save', (req, res) => {
-    authenticate(req, res, options)
-    saveFile(req, res)
-    res.writeHead(301, { Location: req.headers.referer }).end()
+  registerRoute({
+    route: '/admin/api/delete',
+    handler: (req, res) => {
+      authenticate(req, res, options)
+      const { searchParams } = new URL('http://foo.com' + req.url)
+      const filename = searchParams.get('page') || ''
+      const filepath = path.join('.', rootDir, filename)
+      fs.unlinkSync(filepath)
+
+      res.writeHead(301, { Location: '/admin' }).end()
+    },
+  })
+
+  registerRoute({
+    route: '/admin/api/new',
+    handler: (req, res) => {
+      authenticate(req, res, options)
+
+      const { searchParams } = new URL('http://foo.com' + req.url)
+      const filename = searchParams.get('filename')?.replaceAll(' ', '-')
+      fs.writeFileSync(
+        path.join('.', rootDir, filename + '.md'),
+        '# Start typing...'
+      )
+      res.writeHead(301, { Location: '/admin/' + filename }).end()
+    },
+  })
+
+  registerRoute({
+    route: '/admin/api/save',
+    handler: (req, res) => {
+      authenticate(req, res, options)
+      saveFile(req, res)
+      res.writeHead(301, { Location: req.headers.referer }).end()
+    },
   })
 }
 

@@ -34,7 +34,21 @@ Define accepted method by adding `.[method].ts` in the filename:
 
 Each file becomes a router path.
 
-Supports dynamic routes:
+In order to render files from the `/pages` folder, a `<slot></slot>` should be added to the `./index.html`:
+
+::: code-group
+
+```html [./index.html]
+...
+<body>
+  <slot></slot>
+</body>
+...
+```
+
+:::
+
+Supports routes not following folder structure:
 
 ::: code-group
 
@@ -45,9 +59,9 @@ import { renderFile } from './sweyn/renderer.ts'
 createServer({
   routes: [
     {
-      route: '/[slug]',
+      route: '/my-special-route/[uri]',
       handler: (req, res, { route }) => {
-        return renderFile('[slug]', { slug: route.slug })
+        return renderFile('some-file', { uri: route.uri })
       },
     },
   ],
@@ -58,16 +72,16 @@ createServer({
 
 ::: code-group
 
-```html [/pages/[slug].html]
-<h1>Hello from {{ slug }}</h1>
+```html [/pages/some-file.html]
+<h1>Hello from {{ uri }}</h1>
 ```
 
 :::
 
 ::: code-group
 
-```html [http://localhost:3003/foobar]
-<h1>Hello from foobar</h1>
+```html [http://localhost:3003/my-special-route/hello-world]
+<h1>Hello from hello-world</h1>
 ```
 
 :::
@@ -93,25 +107,31 @@ Gives access to html snippets used to insert into pages.
 Use it by inserting the filename between squar brackets.
 
 ::: code-group
+
 ```html [/snippets/foobar.html]
 <code>I'm a partial</code>
 ```
+
 :::
 
 ::: code-group
+
 ```html [/pages/about.html]
 <h1>About page</h1>
 [[ foobar ]]
 <p>Hello</p>
 ```
+
 :::
 
 ::: code-group
+
 ```html [http://localhost:3003/about]
 <h1>About page</h1>
 <code>I'm a partial</code>
 <p>Hello</p>
 ```
+
 :::
 
 Also accessible through API-endpoint, under the `/snippets/*` route:
