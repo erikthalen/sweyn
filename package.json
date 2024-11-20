@@ -1,14 +1,16 @@
 {
-  "version": "0.0.1",
+  "version": "0.0.3",
   "name": "create-sweyn-app",
   "type": "module",
   "scripts": {
     "dev": "pnpm -r --parallel run dev",
     "docs:build": "pnpm -r --parallel run docs:build",
     "tests": "pnpm -r --parallel run test",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js && node scripts/bump.js && npm publish"
   },
-  "bin": "bin/create-sweyn-app.js",
+  "bin": {
+    "create-sweyn-app": "bin/create-sweyn-app.js"
+  },
   "dependencies": {
     "@types/node": "^22.6.1"
   },
