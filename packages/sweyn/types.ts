@@ -14,9 +14,9 @@ export type Route = {
 
 export type Config = {
   port?: number
-  hmrPort?: number
   static?: string | string[]
   cms?: {
+    cmsIndexRoot?: string
     login: string
     password: string
   }

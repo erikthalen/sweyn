@@ -2,22 +2,22 @@ import path from 'node:path'
 import http from 'node:http'
 import fs from 'node:fs/promises'
 import { renderFile, renderVariables } from './renderer.ts'
-import { HMRServer, injectHMR } from './hmr.ts'
+import { injectHMR } from './hmr.ts'
 import { createServer, middlewares, staticFolders } from './server.ts'
 import { registerRoute, withoutWildcards } from './routes.ts'
-import { createCms } from './cms.ts'
+import { createCms, getContent } from './cms.ts'
 import type { Config } from './types.ts'
 import getApiRoutes from './api.ts'
 import { getFilenamesInDirectory } from './utils.ts'
 
-function defaultHandler(filename: string, port?: number) {
+function defaultHandler(filename: string) {
   return async (req: http.IncomingMessage) => {
     const page = await renderFile(filename, {
       [withoutWildcards(filename)]: req.url?.toString().substring(1),
     })
 
     if (process.env.NODE_ENV === 'dev') {
-      return injectHMR(page, port || 8080)
+      return injectHMR(page)
     } else {
       return page
     }
@@ -31,16 +31,14 @@ async function init(config?: Config) {
     snippetsDir: './snippets',
     apiDir: './api',
     port: config?.port || 3003,
-    hmrPort: config?.hmrPort || 8080,
   }
-
-  HMRServer(defaults.hmrPort)
 
   defaults.static.forEach(s => staticFolders.add(s))
   config?.plugins?.forEach(p => middlewares.add(p))
 
   if (config?.cms) {
     createCms({
+      cmsIndexRoot: config.cms.cmsIndexRoot,
       username: config.cms.login,
       password: config.cms.password,
     })
@@ -48,12 +46,12 @@ async function init(config?: Config) {
 
   registerRoute({
     route: '/',
-    handler: defaultHandler('index', defaults.hmrPort),
+    handler: defaultHandler('index'),
   })
 
   registerRoute({
     route: 'error',
-    handler: defaultHandler('error', defaults.hmrPort),
+    handler: defaultHandler('error'),
   })
 
   const files = await getFilenamesInDirectory(defaults.pagesDir)
@@ -65,7 +63,7 @@ async function init(config?: Config) {
 
       registerRoute({
         route: '/' + name,
-        handler: defaultHandler(name, config?.hmrPort),
+        handler: defaultHandler(name),
       })
     })
 
@@ -112,4 +110,4 @@ async function init(config?: Config) {
   )
 }
 
-export { init as createServer, renderFile }
+export { init as createServer, renderFile, getContent }

@@ -18,6 +18,7 @@ export default defineConfig({
           { text: 'Getting started', link: '/getting-started' },
           { text: 'Config', link: '/config' },
           { text: 'Directories', link: '/directories' },
+          { text: 'CMS', link: '/cms' },
         ],
       },
       {

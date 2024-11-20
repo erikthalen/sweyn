@@ -2,6 +2,8 @@
 
 Server With Everything You Need
 
+- Server side web framework
+- No dependencies
 - File based routing
 - File based API
 - "HMR" client development

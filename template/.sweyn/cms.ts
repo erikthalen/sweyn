@@ -1,30 +1,36 @@
 import fs from 'node:fs'
 import fsPromise from 'node:fs/promises'
-import path, { resolve } from 'node:path'
-import { registerRoute, routes } from './routes.ts'
+import path from 'node:path'
+import { registerRoute } from './routes.ts'
 import { readBody } from './server.ts'
 import { renderVariables } from './renderer.ts'
 
-let rootDir = ''
+let rootDir = './'
+let cmsIndexRoot = '.sweyn'
 
 async function saveFile(req, res) {
-  const body = await readBody(req)
-  const { filename, content } = Object.fromEntries(
-    body.split('&').map(part => part.split('='))
-  )
+  try {
 
-  fs.mkdirSync('.' + path.dirname(filename), {
-    recursive: true,
-  })
-
-  const decodedContent = decodeURIComponent(content.replaceAll('+', ' '))
-
-  fs.writeFileSync(
-    path.join('.', rootDir, filename.replaceAll(' ', '-') + '.md'),
-    decodedContent
-  )
-
-  return `Saved ${filename} successfully`
+    const body = await readBody(req)
+    const { filename, content } = Object.fromEntries(
+      body.split('&').map(part => part.split('='))
+    )
+  
+    fs.mkdirSync('.' + path.dirname(filename), {
+      recursive: true,
+    })
+  
+    const decodedContent = decodeURIComponent(content.replaceAll('+', ' '))
+  
+    fs.writeFileSync(
+      path.join('.', rootDir, filename.replaceAll(' ', '-') + '.md'),
+      decodedContent
+    )
+  
+    return `Saved ${filename} successfully`
+  } catch(error) {
+    console.log(error)
+  }
 }
 
 function authenticate(req, res, login) {
@@ -53,13 +59,24 @@ function getFilepath(file) {
 }
 
 export function createCms(options) {
-  rootDir = options.root || '/content'
+  rootDir = options.root || './content'
 
-  async function renderCms(req, res) {
+  if (options.cmsIndexRoot) {
+    cmsIndexRoot = options.cmsIndexRoot
+  }
+
+  async function renderCms(req, res, opts) {
     authenticate(req, res, options)
     res.setHeader('Content-Type', 'text/html')
-    const index = await fsPromise.readFile(resolve('./sweyn/cms.html'))
-    const pages = fs.readdirSync(`.${rootDir}`, { encoding: 'utf8' })
+    const index = await fsPromise.readFile(path.join(cmsIndexRoot, 'cms.html'))
+
+    try {
+      await fsPromise.readdir(`${rootDir}`)
+    } catch (error) {
+      await fsPromise.mkdir(`${rootDir}`)
+    }
+
+    const pages = await fsPromise.readdir(`${rootDir}`, { encoding: 'utf8' })
 
     const menu = pages
       .map(page => {
@@ -73,8 +90,8 @@ export function createCms(options) {
 
     return renderVariables(index.toString(), {
       pages: menu,
-      content: getContent(req.page),
-      filename: req.page,
+      content: getContent(opts.route.page),
+      filename: opts.route.page,
     })
   }
 
@@ -134,6 +151,7 @@ export function createCms(options) {
   })
 
   registerRoute({
+    method: 'POST',
     route: '/admin/api/save',
     handler: (req, res) => {
       authenticate(req, res, options)

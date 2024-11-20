@@ -1,9 +1,10 @@
 import fs from 'node:fs'
-import { WebSocketServer } from 'ws'
+import { registerRoute } from './routes.ts'
 
 const dirs = [
   './',
   './app',
+  './content',
   './public',
   './pages',
   './snippets',
@@ -11,11 +12,14 @@ const dirs = [
   './api',
 ]
 
-export function HMRServer(port = 8080) {
-  const wss = new WebSocketServer({ port })
-
-  wss.on('connection', function connection(ws) {
-    ws.send('Connected to HMR')
+registerRoute({
+  route: '/hmr-update',
+  handler: async (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    })
 
     dirs.forEach(dir => {
       if (!fs.existsSync(dir)) return
@@ -24,32 +28,25 @@ export function HMRServer(port = 8080) {
         if (filename === '.DS_Store') return
         console.clear()
         console.log('hmr reload:', filename)
-        ws.send('reload')
+        res.write('data: reload\n\n')
       })
     })
-  })
-}
+  },
+})
 
-const hmrClient =
-  port => `const connection = new WebSocket('ws://localhost:${port}')
-  connection.onmessage = e => {
-    if (e.data === 'reload') {
-      window.location.reload()
-    } else {
-      console.log(
-        '%c ' + e.data + ' ',
-        'color: green; font-weight:bold; background: lightgreen; border-radius: 3px'
-      )
-    }
-  }
-
-  connection.onclose = function () {
-    window.location.reload()
-  }`
-
-export function injectHMR(str, port) {
-  return str.replace(
+export function injectHMR(htmlFileContent: string) {
+  return htmlFileContent.replace(
     '<head>',
-    `<head><script type="module">${hmrClient(port)}</script>`
+    `<head>
+    <script type="module">
+const source = new EventSource('/hmr-update')
+
+const style = 'color: green; font-weight:bold; background: lightgreen; border-radius: 3px'
+
+console.log('%c ' + 'Connected to HMR' + ' ', style)
+
+source.onmessage = () => window.location.reload()
+source.onerror = () => window.location.reload()
+    </script>`
   )
 }
