@@ -1,20 +1,13 @@
 # Getting started
 
-## Prerequisite
+## Installation
 
 ```sh
-cd path/to/@sweyn
-npm link
-```
-
-## New project
-
-```sh
-npx create-sweyn-app my-project
+pnpm dlx create-sweyn-app my-app
 ```
 
 ```sh
-cd my-project
+cd my-app
 ```
 
 ```sh

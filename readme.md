@@ -1,17 +1,5 @@
-# @sweyn
+# create-sweyn-app
 
 A framework template generator.
 
-## develop
-
-```sh
-pnpm run dev
-```
-
-Do development in `/packages/sweyn`
-
-## deploy
-
-```sh
-pnpm run release
-```
+[Documentation](https://erikthalen.github.io/sweyn/)
