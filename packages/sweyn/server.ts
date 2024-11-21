@@ -1,6 +1,6 @@
 import http from 'node:http'
 import fs, { createReadStream } from 'node:fs'
-import { join, resolve, extname } from 'node:path'
+import { join, extname } from 'node:path'
 import { URL } from 'node:url'
 import {
   asParts,
@@ -79,7 +79,7 @@ export function createRequestHandler(callback) {
       if (res.headersSent) return
 
       if (result && typeof result.on === 'function') {
-        const contentType = CONTENT_TYPES[extname(resolve(req.url))]
+        const contentType = CONTENT_TYPES[extname(req.url)]
         if (contentType) res.setHeader('Content-Type', contentType)
         return result.pipe(res.writeHead(200))
       }

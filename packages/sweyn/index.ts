@@ -4,11 +4,11 @@ import fs from 'node:fs/promises'
 import { renderFile, renderVariables } from './renderer.ts'
 import { injectHMR } from './hmr.ts'
 import { createServer, middlewares, staticFolders } from './server.ts'
-import { registerRoute, withoutWildcards } from './routes.ts'
+import { registerRoute, routes, withoutWildcards } from './routes.ts'
 import { createCms, getContent } from './cms.ts'
 import type { Config } from './types.ts'
-import getApiRoutes from './api.ts'
-import { getFilenamesInDirectory } from './utils.ts'
+import api from './api.ts'
+import { getFilenamesInDirectory, isNotFolder } from './utils.ts'
 
 function defaultHandler(filename: string) {
   return async (req: http.IncomingMessage) => {
@@ -33,6 +33,16 @@ async function init(config?: Config) {
     port: config?.port || 3003,
   }
 
+  registerRoute({
+    route: '/',
+    handler: defaultHandler('index'),
+  })
+
+  registerRoute({
+    route: 'error',
+    handler: defaultHandler('error'),
+  })
+
   defaults.static.forEach(s => staticFolders.add(s))
   config?.plugins?.forEach(p => middlewares.add(p))
 
@@ -44,30 +54,24 @@ async function init(config?: Config) {
     })
   }
 
-  registerRoute({
-    route: '/',
-    handler: defaultHandler('index'),
+  const files = await getFilenamesInDirectory(defaults.pagesDir, {
+    recursive: true,
   })
-
-  registerRoute({
-    route: 'error',
-    handler: defaultHandler('error'),
-  })
-
-  const files = await getFilenamesInDirectory(defaults.pagesDir)
 
   files
-    .filter(file => file !== 'index.html' && file !== 'error.html')
+    .filter(isNotFolder)
+    .filter(file => !['index.html', 'error.html'].includes(file))
     .map(file => {
-      const { name } = path.parse(file)
+      const { dir, name } = path.parse(file)
 
       registerRoute({
-        route: '/' + name,
-        handler: defaultHandler(name),
+        route: path.join('/' + dir, name),
+        handler: defaultHandler(path.join(dir, name)),
       })
     })
 
-  const apiRoutes = await getApiRoutes(defaults.apiDir)
+  const apiFiles = await api.readFiles(defaults.apiDir)
+  const apiRoutes = await api.compileRoutes(defaults.apiDir, apiFiles)
 
   apiRoutes?.forEach(registerRoute)
 
@@ -75,7 +79,13 @@ async function init(config?: Config) {
     registerRoute({
       method: item.method,
       route: item.route,
-      handler: item.handler,
+      handler: async (req, res, options) => {
+        if (process.env.NODE_ENV === 'dev') {
+          return injectHMR(await item.handler(req, res, options))
+        } else {
+          return item.handler(req, res, options)
+        }
+      },
     })
   })
 

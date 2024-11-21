@@ -4,7 +4,7 @@ export type RouteHandler = (
   req: http.IncomingMessage,
   res: http.ServerResponse,
   options?: Record<string, Record<string, string>>
-) => void
+) => any
 
 export type Route = {
   method?: string
@@ -20,6 +20,6 @@ export type Config = {
     login: string
     password: string
   }
-  plugins?: ((req: http.IncomingMessage, res: http.ServerResponse) => void)[]
+  plugins?: ((req: http.IncomingMessage, res: http.ServerResponse) => unknown)[]
   routes?: Route[]
 }
