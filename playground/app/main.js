@@ -1,4 +1,4 @@
-const res = await fetch('/api/some')
+const res = await fetch('/api/alone')
 const json = await res.json()
 
 console.log(json)

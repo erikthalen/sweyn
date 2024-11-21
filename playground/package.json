@@ -9,7 +9,7 @@
     "start": "node --experimental-strip-types server.config.ts"
   },
   "dependencies": {
-    "marked": "^15.0.1",
+    "marked": "^15.0.2",
     "sweyn": "workspace:*"
   },
   "packageManager": "pnpm@9.12.2"

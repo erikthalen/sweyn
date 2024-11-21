@@ -1,16 +1,19 @@
 @font-face {
   font-family: Inter;
-  src: url('/Inter_18pt-Regular.ttf');
+  src: url('/Inter_18pt-Regular.woff2');
+  font-display: block;
 }
 
 @font-face {
   font-family: Inter;
-  src: url('/Inter_18pt-Medium.ttf');
+  src: url('/Inter_18pt-Medium.woff2');
   font-weight: bold;
+  font-display: block;
 }
 
 :root {
-  font-family: 'Inter', serif;
+  font-family: 'Inter', sans-serif;
+  color: #222;
 }
 
 * {
@@ -23,18 +26,25 @@ body {
 }
 
 nav {
-  padding: 10px;
-  display: flex;
-  gap: 10px;
   max-width: 800px;
   margin: 0 auto;
+
+  display: flex;
+  gap: 1rem;
+
+  padding: 1rem;
 }
 
 main {
-  padding: 40px;
   max-width: 800px;
   margin: 0 auto;
 
   display: grid;
-  gap: 10px;
+  gap: 1rem;
+
+  padding: 1rem;
+}
+
+a {
+  color: dodgerblue;
 }
