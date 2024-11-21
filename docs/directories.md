@@ -53,8 +53,7 @@ Supports routes not following folder structure:
 ::: code-group
 
 ```ts [server.config.ts]
-import { createServer } from './sweyn/index.ts'
-import { renderFile } from './sweyn/renderer.ts'
+import { createServer, renderFile } from './.sweyn/index.ts'
 
 createServer({
   routes: [
@@ -94,7 +93,11 @@ Used for storing static assets, like `.css` and `.js`
 
 ## `/content` <Badge type="tip" text="server" />
 
-Used by the CMS, when activated, to store content files in `.md` format.
+Used by the CMS, when activated, to store content files in `.md` format. Get filecontent with `getContent()`
+
+```ts
+import { createServer, getContent } from './.sweyn/index.ts'
+```
 
 ## `/public` <Badge type="warning" text="client" />
 
