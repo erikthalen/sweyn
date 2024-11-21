@@ -1,66 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin</title>
-    <style>
-      * {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      }
 
-      #pages {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 10px;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin</title>
+  <style>
+    * {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
 
-      #editor {
-        white-space: pre-line;
-        font-family: Menlo;
-        border: 1px solid;
-        padding: 20px;
-      }
+    main {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 40px;
+    }
 
-      ul {
-        padding: 0;
-      }
+    nav {
+      border: 1px solid lightgrey;
+      padding: 20px;
+      border-radius: 20px;
+    }
 
-      form {
-        display: grid;
-        justify-items: left;
-        gap: 20px;
-      }
+    h2 {
+      margin: 0;
+    }
 
-      textarea {
-        width: 70ch;
-        height: 25lh;
-        resize: none;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Admin</h1>
-    <main>
-      <nav>
-        <h2>Pages</h2>
-        <ul id="pages">
-          {{ pages }}
-        </ul>
+    #pages {
+      display: grid;
+      gap: 10px;
+    }
 
-        <dialog id="new">
-          <p>Enter a name for the new page/file</p>
+    #pages>div {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: center;
+    }
 
-          <form action="/admin/api/new">
-            <input type="text" name="filename" placeholder="Name" autofocus />
+    #content-area {
+      margin: 0 auto;
+    }
+
+    #editor {
+      white-space: pre-line;
+      font-family: Menlo;
+      border: 1px solid lightgray;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    ul {
+      padding: 0;
+    }
+
+    form {
+      display: grid;
+      justify-items: left;
+      gap: 20px;
+    }
+
+    input[type="text"] {
+      padding: 10px 20px;
+      width: -webkit-fill-available;
+      border-radius: 5px;
+      border: 1px solid lightgray;
+    }
+
+    input[type="submit"],
+    button {
+      transition: filter 200ms;
+      cursor: pointer;
+      border: 1px solid lightgray;
+      background-color: whitesmoke;
+      padding: 10px 30px;
+      border-radius: 7px;
+    }
+
+    input[type="submit"]:hover,
+    button:hover {
+      filter: brightness(0.95);
+    }
+
+    textarea {
+      width: 70ch;
+      height: 25lh;
+      resize: none;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Admin</h1>
+  <main>
+    <nav>
+      <h2>Pages</h2>
+      <ul id="pages">
+        {{ pages }}
+      </ul>
+
+      <dialog id="new">
+        <p>Enter a name for the new page/file</p>
+
+        <form action="/admin/api/new">
+          <input type="text" name="filename" placeholder="Name" autofocus />
+          <div>
             <input type="submit" value="Create page" />
-          </form>
-          <button onclick="closeDialog('new')">Close</button>
-        </dialog>
+            <button type="button" onclick="closeDialog('new')">Cancel</button>
+          </div>
+        </form>
 
-        <button onclick="openDialog('new')">Add new page</button>
-      </nav>
+      </dialog>
 
+      <button onclick="openDialog('new')">Add new page</button>
+    </nav>
+
+    <div id="content-area">
       <h2>Content</h2>
 
       <form action="/admin/api/save" method="POST">
@@ -68,15 +123,17 @@
         <textarea name="content" id="editor">{{ content }}</textarea>
         <input type="submit" value="Save" />
       </form>
-    </main>
+    </div>
+  </main>
 
-    <script>
-      function openDialog(id) {
-        document.getElementById(id)?.showModal()
-      }
-      function closeDialog(id) {
-        document.getElementById(id)?.close()
-      }
-    </script>
-  </body>
+  <script>
+    function openDialog(id) {
+      document.getElementById(id)?.showModal()
+    }
+    function closeDialog(id) {
+      document.getElementById(id)?.close()
+    }
+  </script>
+</body>
+
 </html>

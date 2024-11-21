@@ -80,11 +80,11 @@ export function createCms(options) {
 
     const menu = pages
       .map(page => {
-        return `<a href="/admin/${page.replace('.md', '')}">${page}</a>
+        return `<div><a href="/admin/${page.replace('.md', '')}">${page}</a>
           <form action="/admin/api/delete">
             <input type="hidden" value="${page}" name="page">
             <input type="submit" value="Delete">
-          </form>`
+          </form></div>`
       })
       .join('')
 
