@@ -24,6 +24,7 @@ export default defineConfig({
         text: 'API',
         items: [
           { text: 'CMS', link: '/cms' },
+          { text: 'Database', link: '/database' },
           { text: 'Renderer', link: '/renderer' },
         ],
       },

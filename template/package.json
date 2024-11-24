@@ -7,5 +7,9 @@
   "scripts": {
     "dev": "NODE_ENV=dev node --experimental-strip-types --watch server.config.ts",
     "start": "node --experimental-strip-types server.config.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.5.0",
+    "ws": "^8.18.0"
   }
 }

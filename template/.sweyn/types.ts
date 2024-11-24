@@ -1,10 +1,10 @@
-import http from 'node:http'
+import { IncomingMessage, ServerResponse } from 'node:http'
 
 export type RouteHandler = (
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
+  req: IncomingMessage,
+  res: ServerResponse,
   options?: Record<string, Record<string, string>>
-) => void
+) => any
 
 export type Route = {
   method?: string
@@ -13,13 +13,14 @@ export type Route = {
 }
 
 export type Config = {
+  root?: string
   port?: number
+  HMRPort?: number
   static?: string | string[]
-  cms?: {
-    cmsIndexRoot?: string
+  admin?: {
     login: string
     password: string
   }
-  plugins?: ((req: http.IncomingMessage, res: http.ServerResponse) => void)[]
+  plugins?: ((req: IncomingMessage, res: ServerResponse) => unknown)[]
   routes?: Route[]
 }

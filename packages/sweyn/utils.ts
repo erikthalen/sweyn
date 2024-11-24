@@ -23,3 +23,24 @@ export async function getFilenamesInDirectory(
 export function isNotFolder(filename) {
   return path.extname(filename) !== ''
 }
+
+export function authenticate(req, res, login) {
+  const { authorization } = req.headers
+
+  if (!authorization) {
+    res.setHeader('WWW-Authenticate', 'Basic')
+    throw { status: 401, message: 'Not authorized' }
+  }
+
+  const [_, encodedLogin] = authorization.split(' ')
+  const [user, pw] = Buffer.from(encodedLogin, 'base64')
+    .toString('ascii')
+    .split(':')
+
+  if (user === login.username && pw === login.password) {
+    return true
+  } else {
+    res.setHeader('WWW-Authenticate', 'Basic')
+    throw { status: 401, message: 'Not authorized' }
+  }
+}

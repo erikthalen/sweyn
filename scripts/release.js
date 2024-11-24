@@ -17,6 +17,7 @@ await fs.writeFile(
     {
       version: src.version,
       ...dest,
+      dependencies: src.dependencies,
       devDependencies: src.devDependencies,
     },
     null,

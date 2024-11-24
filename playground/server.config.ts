@@ -1,9 +1,15 @@
 import { marked } from 'marked'
-import { createServer, renderFile, getContent } from 'sweyn'
+import { createServer, renderFile, getContent, createDatabase } from 'sweyn'
+
+const { db, createTable } = createDatabase()
+
+createTable('foobar', {
+  first: 'string',
+})
 
 createServer({
-  cms: {
-    cmsIndexRoot: '../packages/sweyn',
+  root: '../packages/sweyn',
+  admin: {
     login: 'admin',
     password: 'admin',
   },
@@ -24,3 +30,5 @@ createServer({
     },
   ],
 })
+
+export { db }

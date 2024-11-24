@@ -17,7 +17,7 @@ const getFile = name => async path => {
   })
 }
 
-const renderLayout = async (fileContent: string, layout = 'index') => {
+export const renderLayout = async (fileContent: string, layout = 'index') => {
   try {
     const layoutfile = await Promise.any(layoutPaths.map(getFile(layout)))
 

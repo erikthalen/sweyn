@@ -9,17 +9,53 @@
         font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       }
 
-      #pages {
+      body {
+        margin: 0;
+        min-height: 100svh;
+      }
+
+      main {
         display: grid;
         grid-template-columns: auto 1fr;
+        gap: 40px;
+        min-height: inherit;
+      }
+
+      #nav-area {
+        background-color: whitesmoke;
+        padding: 20px;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: normal;
+      }
+
+      #pages {
+        display: grid;
         gap: 10px;
+        min-width: 300px;
+      }
+
+      #pages > div {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      #content-area {
+        margin: 100px auto;
       }
 
       #editor {
         white-space: pre-line;
         font-family: Menlo;
-        border: 1px solid;
+        border: 1px solid lightgray;
         padding: 20px;
+        border-radius: 10px;
+        margin-top: 30px;
       }
 
       ul {
@@ -32,42 +68,78 @@
         gap: 20px;
       }
 
+      input[type='text'] {
+        padding: 10px 20px;
+        width: -webkit-fill-available;
+        border-radius: 5px;
+        border: 1px solid lightgray;
+      }
+
+      input[type='submit'],
+      button {
+        transition: filter 200ms;
+        cursor: pointer;
+        border: 1px solid lightgray;
+        background-color: whitesmoke;
+        padding: 5px 16px;
+        border-radius: 7px;
+      }
+
+      input[type='submit']:hover,
+      button:hover {
+        filter: brightness(0.95);
+      }
+
       textarea {
         width: 70ch;
         height: 25lh;
         resize: none;
       }
+
+      a {
+        color: dodgerblue;
+      }
     </style>
   </head>
+
   <body>
-    <h1>Admin</h1>
     <main>
-      <nav>
-        <h2>Pages</h2>
-        <ul id="pages">
-          {{ pages }}
-        </ul>
+      <section id="nav-area">
+        <h1>Admin</h1>
 
-        <dialog id="new">
-          <p>Enter a name for the new page/file</p>
+        <nav>
+          <h2>Pages</h2>
+          <ul id="pages">
+            {{ pages }}
+          </ul>
 
-          <form action="/admin/api/new">
-            <input type="text" name="filename" placeholder="Name" autofocus />
-            <input type="submit" value="Create page" />
-          </form>
-          <button onclick="closeDialog('new')">Close</button>
-        </dialog>
+          <dialog id="new">
+            <p>Enter a name for the new page/file</p>
 
-        <button onclick="openDialog('new')">Add new page</button>
-      </nav>
+            <form action="/admin/api/new">
+              <input type="text" name="filename" placeholder="Name" autofocus />
+              <div>
+                <input type="submit" value="Create page" />
+                <button type="button" onclick="closeDialog('new')">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </dialog>
 
-      <h2>Content</h2>
+          <button onclick="openDialog('new')">Add new page</button>
+        </nav>
+      </section>
 
-      <form action="/admin/api/save" method="POST">
-        <input type="hidden" name="filename" value="{{ filename }}" />
-        <textarea name="content" id="editor">{{ content }}</textarea>
-        <input type="submit" value="Save" />
-      </form>
+      <section id="content-area">
+        <h2>Content</h2>
+
+        <form action="/admin/api/save" method="POST">
+          <input type="hidden" name="filename" value="{{ filename }}" />
+          <textarea name="content" id="editor">{{ content }}</textarea>
+          <input type="submit" value="Save" />
+        </form>
+      </section>
     </main>
 
     <script>

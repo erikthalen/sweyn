@@ -1,40 +1,36 @@
 import path from 'path'
-import type { Route, RouteHandler } from './types.ts'
-import { getFilenamesInDirectory } from './utils.ts'
+import type { RouteHandler } from './types.ts'
+import { getFilenamesInDirectory, isNotFolder } from './utils.ts'
 
-async function getApiRoutes(dir) {
-  const filenames = await getFilenamesInDirectory(dir)
+async function readFiles(dir: string): Promise<string[]> {
+  const filenames = await getFilenamesInDirectory(dir, { recursive: true })
+  return filenames.filter(isNotFolder)
+}
 
-  if (!filenames) return []
+async function compileRoutes(rootdir, files) {
+  const endpoints = files.map(async filename => {
+    const { dir, name } = path.parse(filename)
+    const [route, method] = name.split('.')
+    const modules = await import(path.resolve(rootdir, filename))
+    const functions = Object.entries(modules)
 
-  const endpoints = filenames.map(async filename => {
-    const [route, method] = path.parse(filename).name.split('.')
-    const modules = await import(path.resolve(dir, filename))
+    return functions.map(([moduleName, handler]) => {
+      const url = path.join(
+        '/api',
+        dir,
+        route,
+        moduleName.replace('default', '')
+      )
 
-    if (Object.values(modules).length === 1) {
-      return [
-        {
-          method,
-          route: path.join('/api', route),
-          handler: Object.values(modules)[0] as RouteHandler,
-        },
-      ]
-    }
-
-    let result: Route[] = []
-
-    for (let module in modules) {
-      result.push({
+      return {
         method,
-        route: path.join('/api', route, module),
-        handler: modules[module] as RouteHandler,
-      })
-    }
-
-    return result
+        route: url,
+        handler: handler as RouteHandler,
+      }
+    })
   })
 
   return (await Promise.all(endpoints)).flat()
 }
 
-export default getApiRoutes
+export default { readFiles, compileRoutes }

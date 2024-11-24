@@ -1,20 +1,38 @@
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import Database from 'better-sqlite3'
-import { registerRoute, routes } from './routes.ts'
+import { registerRoute } from './routes.ts'
 
-export function createDatabase(filename = './db.sqlite') {
-  const db = new Database(filename)
+let dbs = []
+
+async function backupDatabases() {
+  if (!(await fs.stat('./backups').catch(e => false))) {
+    await fs.mkdir('./backups')
+  }
+
+  dbs.forEach(async ({ name, db }) => {
+    const { name: dbname } = path.parse(name)
+
+    const filename = `./backups/${dbname}-${Date.now()}.db`
+
+    await db.backup(filename)
+  })
+}
+
+export default function createDatabase(name = 'db.sqlite') {
+  const db = new Database(name)
+
+  dbs.push({ name, db })
 
   db.pragma('journal_mode = WAL')
 
   registerRoute({
     route: '/db/backup',
-    handler: async (req, res) => {
+    handler: async () => {
       try {
-        const filename = `./backups/backup-${Date.now()}.db`
+        await backupDatabases()
 
-        await db.backup(filename)
-
-        return { code: 200, message: filename + ' saves successfully!' }
+        return { code: 200, message: 'Database(s) backed up successfully!' }
       } catch (error) {
         console.log('backup failed:', error)
       }
@@ -26,7 +44,7 @@ export function createDatabase(filename = './db.sqlite') {
   process.on('SIGINT', () => process.exit(128 + 2))
   process.on('SIGTERM', () => process.exit(128 + 15))
 
-  function createTable(name, columns) {
+  function createTable(tableName: string, columns: Record<string, string>) {
     const defaults = {
       id: 'integer primary key autoincrement',
       created_at: "date default (datetime('now'))",
@@ -39,11 +57,8 @@ export function createDatabase(filename = './db.sqlite') {
       ''
     )
 
-    db.exec(`CREATE TABLE IF NOT EXISTS ${name} (${cols});`)
+    db.exec(`CREATE TABLE IF NOT EXISTS ${tableName} (${cols});`)
   }
 
-  return {
-    db,
-    createTable,
-  }
+  return { db, createTable }
 }

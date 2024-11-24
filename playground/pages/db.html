@@ -1,0 +1,17 @@
+<iframe name="dummyframe" id="dummyframe" style="display: none"></iframe>
+
+<p>Add new row to DB:</p>
+
+<form
+  action="/api/db/set"
+  method="post"
+  target="dummyframe"
+  onsubmit="window.location.reload()"
+>
+  <input type="text" name="data" />
+  <input type="hidden" name="creator" value="me" />
+  <button>Submit</button>
+</form>
+
+<p>All rows in DB:</p>
+<output id="db-rows"></output>

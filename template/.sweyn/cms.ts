@@ -4,9 +4,10 @@ import path from 'node:path'
 import { registerRoute } from './routes.ts'
 import { readBody } from './server.ts'
 import { renderVariables } from './renderer.ts'
+import { authenticate } from './utils.ts'
 
 let rootDir = './'
-let cmsIndexRoot = '.sweyn'
+let rootdir = '.sweyn'
 
 async function saveFile(req, res) {
   try {
@@ -33,27 +34,6 @@ async function saveFile(req, res) {
   }
 }
 
-function authenticate(req, res, login) {
-  const { authorization } = req.headers
-
-  if (!authorization) {
-    res.setHeader('WWW-Authenticate', 'Basic')
-    throw { status: 401, message: 'Not authorized' }
-  }
-
-  const [_, encodedLogin] = authorization.split(' ')
-  const [user, pw] = Buffer.from(encodedLogin, 'base64')
-    .toString('ascii')
-    .split(':')
-
-  if (user === login.username && pw === login.password) {
-    return true
-  } else {
-    res.setHeader('WWW-Authenticate', 'Basic')
-    throw { status: 401, message: 'Not authorized' }
-  }
-}
-
 function getFilepath(file) {
   return path.join('.', rootDir, file + '.md')
 }
@@ -61,14 +41,14 @@ function getFilepath(file) {
 export function createCms(options) {
   rootDir = options.root || './content'
 
-  if (options.cmsIndexRoot) {
-    cmsIndexRoot = options.cmsIndexRoot
+  if (options.rootdir) {
+    rootdir = options.rootdir
   }
 
   async function renderCms(req, res, opts) {
     authenticate(req, res, options)
     res.setHeader('Content-Type', 'text/html')
-    const index = await fsPromise.readFile(path.join(cmsIndexRoot, 'cms.html'))
+    const index = await fsPromise.readFile(path.join(rootdir, 'cms.html'))
 
     try {
       await fsPromise.readdir(`${rootDir}`)
@@ -80,11 +60,11 @@ export function createCms(options) {
 
     const menu = pages
       .map(page => {
-        return `<a href="/admin/${page.replace('.md', '')}">${page}</a>
+        return `<div><a href="/admin/${page.replace('.md', '')}">${page}</a>
           <form action="/admin/api/delete">
             <input type="hidden" value="${page}" name="page">
             <input type="submit" value="Delete">
-          </form>`
+          </form></div>`
       })
       .join('')
 
