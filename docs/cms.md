@@ -12,7 +12,7 @@ Add CMS object to config in `./server.config.ts`, and supply login and password:
 import { createServer } from './.sweyn/index.ts'
 
 createServer({
-  cms: { // [!code ++]
+  admin: { // [!code ++]
     login: 'admin', // [!code ++]
     password: 'admin', // [!code ++]
   }, // [!code ++]
@@ -26,7 +26,7 @@ import { createServer } from './.sweyn/index.ts' // [!code --]
 import { createServer, getContent } from './.sweyn/index.ts' // [!code ++]
 
 createServer({
-  cms: {
+  admin: {
     login: 'admin',
     password: 'admin',
   },
@@ -41,14 +41,14 @@ createServer({
 })
 ```
 
-It's in war markdown, install a markdown-to-html parser of choice, and parse the content:
+It's in raw markdown, install a markdown-to-html parser of choice, and parse the content:
 
 ```ts
 import { marked } from 'marked' // [!code ++]
 import { createServer, getContent } from './.sweyn/index.ts'
 
 createServer({
-  cms: {
+  admin: {
     login: 'admin',
     password: 'admin',
   },
@@ -72,7 +72,7 @@ import { createServer, getContent } from './.sweyn/index.ts' // [!code --]
 import { createServer, getContent, renderFile } from './.sweyn/index.ts' // [!code ++]
 
 createServer({
-  cms: {
+  admin: {
     login: 'admin',
     password: 'admin',
   },

@@ -3,10 +3,10 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
-    "lib": ["ESNext", "dom", "dom.iterable"],
+    "lib": ["ESNext"],
     "module": "nodenext",
     "target": "es2023",
-    "moduleResolution": "nodenext"
+    "moduleResolution": "nodenext",
+    "verbatimModuleSyntax": true
   }
 }

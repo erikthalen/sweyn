@@ -9,6 +9,7 @@ createTable('foobar', {
 
 createServer({
   root: '../packages/sweyn',
+  analytics: true,
   admin: {
     login: 'admin',
     password: 'admin',

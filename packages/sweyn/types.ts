@@ -17,6 +17,7 @@ export type Config = {
   port?: number
   HMRPort?: number
   static?: string | string[]
+  analytics?: boolean,
   admin?: {
     login: string
     password: string

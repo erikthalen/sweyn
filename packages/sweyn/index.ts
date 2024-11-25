@@ -2,7 +2,7 @@ import path from 'node:path'
 import http from 'node:http'
 import fs from 'node:fs/promises'
 import { renderFile, renderVariables, renderLayout } from './renderer.ts'
-import { HMRServer, injectHMR, withHMR } from './hmr.ts'
+import { HMRServer, withHMR } from './hmr.ts'
 import { createServer, middlewares, staticFolders } from './server.ts'
 import { registerRoute, routes, withoutWildcards } from './routes.ts'
 import { createCms, getContent } from './cms.ts'
@@ -10,6 +10,7 @@ import type { Config } from './types.ts'
 import api from './api.ts'
 import { getFilenamesInDirectory, isNotFolder } from './utils.ts'
 import createDatabase from './db.ts'
+import { createAnalytics } from './analytics.ts'
 
 export let config: Config = {}
 
@@ -34,8 +35,6 @@ function defaultHandler(filename: string) {
   }
 }
 
-
-
 async function init(userConfig?: Config) {
   config = userConfig
 
@@ -45,6 +44,8 @@ async function init(userConfig?: Config) {
   }
 
   HMRServer()
+
+  const { recordVisitor } = config.analytics ? createAnalytics(config) : {}
 
   registerRoute({
     route: '/',
@@ -61,7 +62,7 @@ async function init(userConfig?: Config) {
 
   if (config?.admin) {
     createCms({
-      cmsIndexRoot: config.root,
+      rootdir: config.root,
       username: config.admin.login,
       password: config.admin.password,
     })
@@ -124,7 +125,7 @@ async function init(userConfig?: Config) {
   /**
    * start server
    */
-  createServer({ withAnalytics: true }).listen(defaults.port, () =>
+  createServer({ callbacks: [recordVisitor] }).listen(defaults.port, () =>
     console.log(`http://localhost:${defaults.port}`)
   )
 }
@@ -134,5 +135,5 @@ export {
   renderFile,
   getContent,
   renderLayout,
-  createDatabase
+  createDatabase,
 }

@@ -8,7 +8,6 @@ import {
   isWildcard,
   withoutWildcards,
 } from './routes.ts'
-import analytics from './analytics.ts'
 
 const CONTENT_TYPES = {
   '.html': 'text/html',
@@ -77,8 +76,6 @@ export function createRequestHandler(callback) {
     try {
       const result = await callback(req, res)
 
-      if (req.url === '/hmr-update') console.log(req.url)
-
       if (result instanceof Error) {
         return res.writeHead(500).end(JSON.stringify(result))
       }
@@ -86,7 +83,7 @@ export function createRequestHandler(callback) {
       if (res.headersSent) return
 
       if (result && isReadStream(result)) {
-        const { pathname } = new URL('https://foobar.com' + req.url)
+        const { pathname } = new URL(req.url, 'https://foobar.com')
         const contentType = CONTENT_TYPES[extname(pathname)]
 
         if (contentType) res.setHeader('Content-Type', contentType)
@@ -121,11 +118,11 @@ export function createRequestHandler(callback) {
 }
 
 const requestHandler = ({
-  withAnalytics = false,
-}: { withAnalytics?: boolean } = {}) =>
+  callbacks = [],
+}: { callbacks?: ((req, res) => unknown)[] } = {}) =>
   createRequestHandler(async (req: IncomingMessage, res: ServerResponse) => {
     const { method, url } = req
-    const { pathname, searchParams } = new URL('https://foobar.com' + url)
+    const { pathname, searchParams } = new URL(url, 'https://foobar.com')
 
     // is request for a static file?
     if (extname(pathname)) {
@@ -151,13 +148,17 @@ const requestHandler = ({
       }
     })
 
-    if (withAnalytics) {
-      console.log('pageload', req.url)
-      analytics(req)
-    }
+    callbacks.forEach(callback => {
+      if (typeof callback === 'function') {
+        callback(req, res)
+      }
+    })
 
     return handler(req, res, options)
   })
 
-export const createServer = ({ withAnalytics }: { withAnalytics: boolean }) =>
-  http.createServer(requestHandler({ withAnalytics }))
+export const createServer = ({
+  callbacks,
+}: {
+  callbacks: ((req, res) => unknown)[]
+}) => http.createServer(requestHandler({ callbacks }))

@@ -26,6 +26,7 @@ export default defineConfig({
           { text: 'CMS', link: '/cms' },
           { text: 'Database', link: '/database' },
           { text: 'Renderer', link: '/renderer' },
+          { text: 'HMR', link: '/hmr' },
         ],
       },
     ],

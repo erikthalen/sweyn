@@ -25,7 +25,7 @@ type Config = {
   port?: number
   hmrPort?: number
   static?: string | string[]
-  cms?: {
+  admin?: {
     login: string
     password: string
   }
