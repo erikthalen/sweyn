@@ -14,71 +14,7 @@ export function createAnalytics(config) {
     referer: 'string',
   })
 
-  function getData({ timeframe = '1 month', resolution = '1 day' }) {
-    let query = ''
-
-    switch (timeframe) {
-      case '1 day': {
-        query = `SELECT * FROM visitor WHERE created_at BETWEEN datetime('now', '-1 day') AND datetime('now')`
-        break
-      }
-      case '1 week': {
-        query = `SELECT * FROM visitor WHERE created_at BETWEEN datetime('now', '-1 week') AND datetime('now')`
-        break
-      }
-      case '1 month': {
-        query = `SELECT * FROM visitor WHERE created_at BETWEEN datetime('now', '-1 month') AND datetime('now')`
-        break
-      }
-      case '1 year': {
-        query = `SELECT * FROM visitor WHERE created_at BETWEEN datetime('now', '-1 year') AND datetime('now')`
-        break
-      }
-    }
-
-    const data = db.prepare(query).all()
-
-    const resolutions = {
-      '1 second': 1000,
-      '1 minute': 1000 * 60,
-      '1 hour': 1000 * 60 * 60,
-      '1 day': 1000 * 60 * 60 * 24,
-      '1 week': 1000 * 60 * 60 * 24 * 7,
-      '1 month': 1000 * 60 * 60 * 24 * 7 * 31,
-      '1 year': 1000 * 60 * 60 * 24 * 7 * 365,
-    }
-
-    const res = resolutions[resolution]
-
-    const grouped = Object.groupBy(
-      data,
-      ({ created_at }) => Math.floor(new Date(created_at).getTime() / res) * res
-    )
-
-    const sorted = Object.entries(grouped).toSorted((a, b) => {
-      return a[0] < b[0] ? -1 : 1
-    })
-
-    const pretty = sorted.map(([key, value]): [string, number] => {
-      const date = new Date(parseInt(key))
-
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric',
-      }
-
-      const formatter = new Intl.DateTimeFormat('da-DK', options)
-      const formattedDate = formatter.format(date)
-
-      return [formattedDate, value.length]
-    })
-
-    return pretty
-  }
+  // generateFakeVisitors(db, 10000)
 
   registerRoute({
     route: '/analytics',
@@ -92,7 +28,7 @@ export function createAnalytics(config) {
         path.join(config.root, 'analytics.html')
       )
 
-      const pretty = getData({ timeframe: '1 year', resolution: '1 day' })
+      const pretty = getData(db, { days: 365, resolution: '1 day' })
 
       const maxValue = Math.max(...pretty.map(v => v[1]))
 
@@ -108,7 +44,12 @@ export function createAnalytics(config) {
         return acc + li
       }, '')
 
-      return renderVariables(fileContent.toString(), { data: html })
+      const total_count = pretty.reduce((acc, cur) => (acc += cur.length), 0)
+
+      return renderVariables(fileContent.toString(), {
+        data: html,
+        total_count,
+      })
     },
   })
 
@@ -132,6 +73,74 @@ export function createAnalytics(config) {
   return {
     recordVisitor,
   }
+}
+
+function getData(db, { days = 31, resolution = '1 hour' }) {
+  let query = ''
+
+  switch (days) {
+    case 1: {
+      query = `SELECT * FROM visitor WHERE created_at BETWEEN datetime('now', '-1 day') AND datetime('now')`
+      break
+    }
+    case 7: {
+      query = `SELECT * FROM visitor WHERE created_at BETWEEN datetime('now', '-1 week') AND datetime('now')`
+      break
+    }
+    case 31: {
+      query = `SELECT * FROM visitor WHERE created_at BETWEEN datetime('now', '-1 month') AND datetime('now')`
+      break
+    }
+    case 365: {
+      query = `SELECT * FROM visitor WHERE created_at BETWEEN datetime('now', '-1 year') AND datetime('now')`
+      break
+    }
+  }
+
+  const data = db.prepare(query).all()
+
+  const resolutions = {
+    '1 second': 1000,
+    '1 minute': 1000 * 60,
+    '1 hour': 1000 * 60 * 60,
+    '1 day': 1000 * 60 * 60 * 24,
+    '1 week': 1000 * 60 * 60 * 24 * 7,
+    '1 month': 1000 * 60 * 60 * 24 * 7 * 31,
+    '1 year': 1000 * 60 * 60 * 24 * 7 * 365,
+  }
+
+  const res = resolutions[resolution]
+
+  const grouped = Object.groupBy(
+    data,
+    ({ created_at }) => Math.floor(new Date(created_at).getTime() / res) * res
+  )
+
+  const sorted = Object.entries(grouped).toSorted((a, b) => {
+    return a[0] < b[0] ? -1 : 1
+  })
+
+  const pretty = sorted.map(([key, value]): [string, number] => {
+    const date = new Date(parseInt(key))
+
+    const showTime = ['1 second', '1 minute', '1 hour'].includes(resolution)
+
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      ...(showTime
+        ? { hour: 'numeric', minute: 'numeric', second: 'numeric' }
+        : {}),
+    }
+
+    const formatter = new Intl.DateTimeFormat('da-DK', options)
+    const formattedDate = formatter.format(date)
+
+    return [formattedDate, value.length]
+  })
+
+  return pretty
 }
 
 function isRegistered(db, ip) {

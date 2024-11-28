@@ -1,4 +1,8 @@
-import http, { IncomingMessage, ServerResponse } from 'node:http'
+import http, {
+  IncomingMessage,
+  ServerResponse,
+  type RequestListener,
+} from 'node:http'
 import fs, { createReadStream } from 'node:fs'
 import { join, extname } from 'node:path'
 import { URL } from 'node:url'
@@ -34,13 +38,13 @@ export const middlewares = new Set()
 const getFileFromFS =
   (filename: string) =>
   (path: string): Promise<fs.ReadStream> => {
-    return new Promise((res, rej) => {
+    return new Promise((resolve, reject) => {
       try {
         const stream = createReadStream(join(path, filename))
-        stream.on('error', rej)
-        stream.on('open', () => res(stream))
+        stream.on('error', reject)
+        stream.on('open', () => resolve(stream))
       } catch (error) {
-        rej(error)
+        reject(error)
       }
     })
   }
@@ -76,12 +80,6 @@ export function createRequestHandler(callback) {
     try {
       const result = await callback(req, res)
 
-      if (result instanceof Error) {
-        return res.writeHead(500).end(JSON.stringify(result))
-      }
-
-      if (res.headersSent) return
-
       if (result && isReadStream(result)) {
         const { pathname } = new URL(req.url, 'https://foobar.com')
         const contentType = CONTENT_TYPES[extname(pathname)]
@@ -92,22 +90,13 @@ export function createRequestHandler(callback) {
           res.setHeader('Cache-Control', 'max-age=31536000')
         }
 
-        return result.pipe(res.writeHead(200))
+        result.pipe(res.writeHead(200))
+        return
       }
 
-      if (res.headersSent) return
-
-      if (typeof result === 'string') {
+      if (Buffer.isBuffer(result) || typeof result === 'string') {
         return res.writeHead(200).end(result)
       }
-
-      if (res.headersSent) return
-
-      if (Buffer.isBuffer(result)) {
-        return res.writeHead(200).end(result)
-      }
-
-      if (res.headersSent) return
 
       return res.writeHead(200).end(JSON.stringify(result))
     } catch (error) {
@@ -119,7 +108,7 @@ export function createRequestHandler(callback) {
 
 const requestHandler = ({
   callbacks = [],
-}: { callbacks?: ((req, res) => unknown)[] } = {}) =>
+}: { callbacks?: RequestListener[] } = {}) =>
   createRequestHandler(async (req: IncomingMessage, res: ServerResponse) => {
     const { method, url } = req
     const { pathname, searchParams } = new URL(url, 'https://foobar.com')
@@ -157,8 +146,5 @@ const requestHandler = ({
     return handler(req, res, options)
   })
 
-export const createServer = ({
-  callbacks,
-}: {
-  callbacks: ((req, res) => unknown)[]
-}) => http.createServer(requestHandler({ callbacks }))
+export const createServer = ({ callbacks }: { callbacks: RequestListener[] }) =>
+  http.createServer(requestHandler({ callbacks }))
