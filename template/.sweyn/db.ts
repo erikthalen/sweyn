@@ -19,7 +19,7 @@ async function backupDatabases() {
   })
 }
 
-export default function createDatabase(name = 'db.sqlite') {
+export default function createDatabase(name = 'data.db') {
   const db = new Database(name)
 
   dbs.push({ name, db })

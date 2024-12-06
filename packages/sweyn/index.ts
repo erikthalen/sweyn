@@ -45,7 +45,12 @@ async function init(userConfig?: Config) {
 
   HMRServer()
 
-  const { recordVisitor } = config.analytics ? createAnalytics(config) : {}
+  defaults.static.forEach(s => staticFolders.add(s))
+
+  if (config?.analytics) {
+    const { recordVisitor } = createAnalytics(config)
+    middlewares.add(recordVisitor)
+  }
 
   registerRoute({
     route: '/',
@@ -56,9 +61,6 @@ async function init(userConfig?: Config) {
     route: 'error',
     handler: withHMR(defaultHandler('error')),
   })
-
-  defaults.static.forEach(s => staticFolders.add(s))
-  // config?.plugins?.forEach(p => middlewares.add(p))
 
   if (config?.admin) {
     createCms({
@@ -120,12 +122,10 @@ async function init(userConfig?: Config) {
     })
   })
 
-  // console.log(routes)
-
   /**
    * start server
    */
-  createServer({ callbacks: [recordVisitor] }).listen(defaults.port, () =>
+  createServer().listen(defaults.port, () =>
     console.log(`http://localhost:${defaults.port}`)
   )
 }

@@ -1,4 +1,4 @@
-import { db } from './../server.config.ts'
+import { db } from '../server.config.ts'
 
 export function get(req, res) {
   const { searchParams } = new URL('https://foobar.com' + req.url)

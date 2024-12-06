@@ -1,10 +1,22 @@
-import { IncomingMessage, ServerResponse } from 'node:http'
+import type {
+  IncomingMessage,
+  ServerResponse,
+  RequestListener,
+} from 'node:http'
 
-export type RouteHandler = (
-  req: IncomingMessage,
-  res: ServerResponse,
-  options?: Record<string, Record<string, string>>
-) => any
+export type Config = {
+  root?: string
+  port?: number
+  HMRPort?: number
+  static?: string | string[]
+  analytics?: boolean
+  admin?: {
+    login: string
+    password: string
+  }
+  plugins?: RequestListener[]
+  routes?: Route[]
+}
 
 export type Route = {
   method?: string
@@ -12,15 +24,8 @@ export type Route = {
   handler: RouteHandler
 }
 
-export type Config = {
-  root?: string
-  port?: number
-  HMRPort?: number
-  static?: string | string[]
-  admin?: {
-    login: string
-    password: string
-  }
-  plugins?: ((req: IncomingMessage, res: ServerResponse) => unknown)[]
-  routes?: Route[]
-}
+export type RouteHandler = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  options?: Record<string, Record<string, string>>
+) => any

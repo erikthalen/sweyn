@@ -3,11 +3,11 @@
 ## Installation
 
 ```sh
-pnpm dlx create-sweyn-app my-app
+pnpm create sweyn <app-name>
 ```
 
 ```sh
-cd my-app
+cd <app-name>
 ```
 
 ```sh

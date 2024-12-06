@@ -35,24 +35,25 @@ export const staticFolders = new Set(['', 'public'])
 
 export const middlewares = new Set()
 
-const getFileFromFS =
-  (filename: string) =>
-  (path: string): Promise<fs.ReadStream> => {
-    return new Promise((resolve, reject) => {
-      try {
-        const stream = createReadStream(join(path, filename))
-        stream.on('error', reject)
-        stream.on('open', () => resolve(stream))
-      } catch (error) {
-        reject(error)
-      }
-    })
-  }
+const getFileFromFS = (
+  path: string,
+  filename: string
+): Promise<fs.ReadStream> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const stream = createReadStream(join(path, filename))
+      stream.on('error', reject)
+      stream.on('open', () => resolve(stream))
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
 
 export async function streamFileFromStaticFolder(filename) {
   try {
     return await Promise.any(
-      Array.from(staticFolders).map(getFileFromFS(filename))
+      Array.from(staticFolders).map(path => getFileFromFS(path, filename))
     )
   } catch (error) {
     throw {
@@ -62,7 +63,7 @@ export async function streamFileFromStaticFolder(filename) {
   }
 }
 
-export async function readBody(req: http.IncomingMessage): Promise<string> {
+export async function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     let body = ''
     req.on('data', chunk => (body += chunk.toString()))
@@ -79,6 +80,8 @@ export function createRequestHandler(callback) {
   return async function (req, res) {
     try {
       const result = await callback(req, res)
+
+      if (res.headersSent) return
 
       if (result && isReadStream(result)) {
         const { pathname } = new URL(req.url, 'https://foobar.com')
@@ -106,10 +109,8 @@ export function createRequestHandler(callback) {
   }
 }
 
-const requestHandler = ({
-  callbacks = [],
-}: { callbacks?: RequestListener[] } = {}) =>
-  createRequestHandler(async (req: IncomingMessage, res: ServerResponse) => {
+const requestHandler = createRequestHandler(
+  async (req: IncomingMessage, res: ServerResponse) => {
     const { method, url } = req
     const { pathname, searchParams } = new URL(url, 'https://foobar.com')
 
@@ -137,14 +138,14 @@ const requestHandler = ({
       }
     })
 
-    callbacks.forEach(callback => {
-      if (typeof callback === 'function') {
-        callback(req, res)
+    middlewares.forEach(middleware => {
+      if (typeof middleware === 'function') {
+        middleware(req, res)
       }
     })
 
     return handler(req, res, options)
-  })
+  }
+)
 
-export const createServer = ({ callbacks }: { callbacks: RequestListener[] }) =>
-  http.createServer(requestHandler({ callbacks }))
+export const createServer = () => http.createServer(requestHandler)

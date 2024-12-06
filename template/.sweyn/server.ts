@@ -1,4 +1,8 @@
-import http, { IncomingMessage, ServerResponse } from 'node:http'
+import http, {
+  IncomingMessage,
+  ServerResponse,
+  type RequestListener,
+} from 'node:http'
 import fs, { createReadStream } from 'node:fs'
 import { join, extname } from 'node:path'
 import { URL } from 'node:url'
@@ -8,7 +12,6 @@ import {
   isWildcard,
   withoutWildcards,
 } from './routes.ts'
-import analytics from './analytics.ts'
 
 const CONTENT_TYPES = {
   '.html': 'text/html',
@@ -32,24 +35,25 @@ export const staticFolders = new Set(['', 'public'])
 
 export const middlewares = new Set()
 
-const getFileFromFS =
-  (filename: string) =>
-  (path: string): Promise<fs.ReadStream> => {
-    return new Promise((res, rej) => {
-      try {
-        const stream = createReadStream(join(path, filename))
-        stream.on('error', rej)
-        stream.on('open', () => res(stream))
-      } catch (error) {
-        rej(error)
-      }
-    })
-  }
+const getFileFromFS = (
+  path: string,
+  filename: string
+): Promise<fs.ReadStream> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const stream = createReadStream(join(path, filename))
+      stream.on('error', reject)
+      stream.on('open', () => resolve(stream))
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
 
 export async function streamFileFromStaticFolder(filename) {
   try {
     return await Promise.any(
-      Array.from(staticFolders).map(getFileFromFS(filename))
+      Array.from(staticFolders).map(path => getFileFromFS(path, filename))
     )
   } catch (error) {
     throw {
@@ -59,7 +63,7 @@ export async function streamFileFromStaticFolder(filename) {
   }
 }
 
-export async function readBody(req: http.IncomingMessage): Promise<string> {
+export async function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     let body = ''
     req.on('data', chunk => (body += chunk.toString()))
@@ -77,16 +81,10 @@ export function createRequestHandler(callback) {
     try {
       const result = await callback(req, res)
 
-      if (req.url === '/hmr-update') console.log(req.url)
-
-      if (result instanceof Error) {
-        return res.writeHead(500).end(JSON.stringify(result))
-      }
-
       if (res.headersSent) return
 
       if (result && isReadStream(result)) {
-        const { pathname } = new URL('https://foobar.com' + req.url)
+        const { pathname } = new URL(req.url, 'https://foobar.com')
         const contentType = CONTENT_TYPES[extname(pathname)]
 
         if (contentType) res.setHeader('Content-Type', contentType)
@@ -95,22 +93,13 @@ export function createRequestHandler(callback) {
           res.setHeader('Cache-Control', 'max-age=31536000')
         }
 
-        return result.pipe(res.writeHead(200))
+        result.pipe(res.writeHead(200))
+        return
       }
 
-      if (res.headersSent) return
-
-      if (typeof result === 'string') {
+      if (Buffer.isBuffer(result) || typeof result === 'string') {
         return res.writeHead(200).end(result)
       }
-
-      if (res.headersSent) return
-
-      if (Buffer.isBuffer(result)) {
-        return res.writeHead(200).end(result)
-      }
-
-      if (res.headersSent) return
 
       return res.writeHead(200).end(JSON.stringify(result))
     } catch (error) {
@@ -120,12 +109,10 @@ export function createRequestHandler(callback) {
   }
 }
 
-const requestHandler = ({
-  withAnalytics = false,
-}: { withAnalytics?: boolean } = {}) =>
-  createRequestHandler(async (req: IncomingMessage, res: ServerResponse) => {
+const requestHandler = createRequestHandler(
+  async (req: IncomingMessage, res: ServerResponse) => {
     const { method, url } = req
-    const { pathname, searchParams } = new URL('https://foobar.com' + url)
+    const { pathname, searchParams } = new URL(url, 'https://foobar.com')
 
     // is request for a static file?
     if (extname(pathname)) {
@@ -151,13 +138,14 @@ const requestHandler = ({
       }
     })
 
-    if (withAnalytics) {
-      console.log('pageload', req.url)
-      analytics(req)
-    }
+    middlewares.forEach(middleware => {
+      if (typeof middleware === 'function') {
+        middleware(req, res)
+      }
+    })
 
     return handler(req, res, options)
-  })
+  }
+)
 
-export const createServer = ({ withAnalytics }: { withAnalytics: boolean }) =>
-  http.createServer(requestHandler({ withAnalytics }))
+export const createServer = () => http.createServer(requestHandler)

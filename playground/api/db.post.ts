@@ -1,5 +1,5 @@
 import { readBody } from 'sweyn/server.ts'
-import { db } from './../server.config.ts'
+import { db } from '../server.config.ts'
 
 export async function set(req, res) {
   const body = await readBody(req)

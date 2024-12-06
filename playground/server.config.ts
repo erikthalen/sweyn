@@ -20,6 +20,7 @@ createServer({
       handler: async (req, res, { route }) => {
         return renderFile('cms-page', {
           content: await marked.parse(getContent(route.page)),
+          version: Date.now(),
         })
       },
     },
