@@ -1,15 +1,8 @@
 #!/usr/bin/env node
+import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-// import readline from 'node:readline'
 import { spawn } from 'node:child_process'
-
-console.log('Create a new sweyn app')
-
-// const rl = readline.createInterface({
-//   input: process.stdin,
-//   output: process.stdout,
-// })
 
 const colors = {
   reset: '\x1b[0m',
@@ -20,7 +13,17 @@ const colors = {
   green: '\x1b[32m',
 }
 
+console.log(
+  `${colors.reset + colors.blue}Create a new sweyn app${colors.reset}`
+)
+
 const name = process.argv[2]
+
+if (fsSync.existsSync(path.join(process.cwd(), name))) {
+  console.warn(`The folder ${path.join(process.cwd(), name)} already exists`)
+  console.error('Aborting')
+  process.exit(1)
+}
 
 async function copyTemplateFiles(name) {
   try {
@@ -72,10 +75,12 @@ async function copyTemplateFiles(name) {
     const s = spawn('pnpm', ['install'], { stdio: 'inherit' })
 
     s.on('close', code => {
-      console.log(`Run`)
-      console.log(`${colors.reset + colors.green}cd ${name}${colors.reset}`)
-      console.log(`${colors.reset + colors.green}pnpm run dev${colors.reset}`)
-      console.log(`to get started`)
+      console.log('')
+      console.log(`${colors.reset + colors.blue}Run:${colors.reset}`)
+      console.log(`${colors.reset + colors.green}$ cd ${name}${colors.reset}`)
+      console.log(`${colors.reset + colors.green}$ pnpm run dev${colors.reset}`)
+      console.log(`${colors.reset + colors.blue}to get started${colors.reset}`)
+      console.log('')
       process.exit()
     })
   } catch (error) {

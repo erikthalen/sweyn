@@ -7,7 +7,8 @@
     "docs:build": "pnpm -r --parallel run docs:build",
     "tests": "pnpm -r --parallel run test",
     "soft-launch": "node scripts/release.js",
-    "release": "node scripts/release.js && node scripts/bump.js && git tag v$npm_package_version && npm publish"
+    "release": "node scripts/release.js && node scripts/bump.js && npm publish",
+    "tag": "git tag v$npm_package_version"
   },
   "bin": {
     "create-sweyn": "bin/create-sweyn.js"
