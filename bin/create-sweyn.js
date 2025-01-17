@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import readline from 'node:readline'
+// import readline from 'node:readline'
 import { spawn } from 'node:child_process'
 
 console.log('Create a new sweyn app')
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-})
+// const rl = readline.createInterface({
+//   input: process.stdin,
+//   output: process.stdout,
+// })
 
 const colors = {
   reset: '\x1b[0m',
@@ -30,6 +30,9 @@ async function copyTemplateFiles(name) {
       { recursive: true }
     )
 
+    /**
+     * update name in package.json
+     */
     const packageJSON = await fs.readFile(
       path.join(process.cwd(), name, 'package.json')
     )
@@ -37,6 +40,19 @@ async function copyTemplateFiles(name) {
     await fs.writeFile(
       path.join(process.cwd(), name, 'package.json'),
       JSON.stringify({ name, ...JSON.parse(packageJSON) }, null, 2)
+    )
+
+    /**
+     * update <title> in index.html
+     */
+    const indexHTML = await fs.readFile(
+      path.join(process.cwd(), name, 'index.html'),
+      { encoding: 'utf8' }
+    )
+
+    await fs.writeFile(
+      path.join(process.cwd(), name, 'index.html'),
+      indexHTML.replace('<title>sweyn-app</title>', `<title>${name}</title>`)
     )
 
     console.log(
@@ -68,36 +84,3 @@ async function copyTemplateFiles(name) {
 }
 
 await copyTemplateFiles(name)
-
-// rl.question(
-//   `${colors.reset + colors.dim + colors.black}Name of the project: ${
-//     colors.reset + colors.blue + colors.underscore
-//   }`,
-//   async name => {
-//     rl.close()
-
-//     try {
-//       await fs.cp(
-//         path.join(import.meta.dirname, '../template'),
-//         path.join(process.cwd(), name),
-//         { recursive: true }
-//       )
-
-//       console.log(
-//         `${colors.reset + colors.green}Successfully created project in /${
-//           name + colors.reset
-//         }`
-//       )
-
-//       process.chdir(name)
-
-//       const s = spawn('pnpm', ['install'])
-
-//       s.stdout.on('data', function (msg) {
-//         console.log(msg.toString())
-//       })
-//     } catch (error) {
-//       console.log(error)
-//     }
-//   }
-// )

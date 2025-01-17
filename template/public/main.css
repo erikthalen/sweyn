@@ -9,8 +9,20 @@
   font-weight: bold;
 }
 
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-group(root) {
+  animation-duration: 0.2s;
+}
+
 :root {
   font-family: 'Inter', serif;
+
+  font-synthesis: style;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
@@ -22,5 +34,5 @@ body {
   place-content: center;
   place-items: center;
   gap: 1rem;
-  height: 80vh;
+  min-height: 80vh;
 }

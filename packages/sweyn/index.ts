@@ -2,9 +2,14 @@ import path from 'node:path'
 import http from 'node:http'
 import fs from 'node:fs/promises'
 import { renderFile, renderVariables, renderLayout } from './renderer.ts'
-import { HMRServer, withHMR } from './hmr.ts'
+import { disconnectHMR, HMRServer, watchFilesAdded, withHMR } from './hmr.ts'
 import { createServer, middlewares, staticFolders } from './server.ts'
-import { registerRoute, routes, withoutWildcards } from './routes.ts'
+import {
+  registerRoute,
+  routes,
+  withoutWildcards,
+  clearRoutes,
+} from './routes.ts'
 import { createCms, getContent } from './cms.ts'
 import type { Config } from './types.ts'
 import api from './api.ts'
@@ -13,13 +18,14 @@ import createDatabase from './db.ts'
 import { createAnalytics } from './analytics.ts'
 
 export let config: Config = {}
+let server: http.Server = null
 
 const app = {
   version: generateVersion(),
 }
 
 function generateVersion() {
-  return [...Array(20)].map(() => Math.random().toString(36)[2]).join('')
+  return Date.now()
 }
 
 export function refreshAppVersion() {
@@ -125,9 +131,22 @@ async function init(userConfig?: Config) {
   /**
    * start server
    */
-  createServer().listen(defaults.port, () =>
+  server = createServer()
+
+  server.listen(defaults.port, () =>
     console.log(`http://localhost:${defaults.port}`)
   )
+
+  watchFilesAdded(() => {
+    // cleanup
+    disconnectHMR()
+    defaults.static.forEach(s => staticFolders.delete(s))
+    clearRoutes()
+    server.close()
+
+    // re-init
+    init()
+  })
 }
 
 export {

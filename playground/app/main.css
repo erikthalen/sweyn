@@ -12,6 +12,10 @@
 }
 
 :root {
+  font-synthesis: style;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+
   font-family: 'Inter', sans-serif;
   color: #222;
 }

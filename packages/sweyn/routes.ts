@@ -102,3 +102,7 @@ export const getMatchingRoute = (
     throw { status: 404, message: 'No route found' + error }
   }
 }
+
+export function clearRoutes () {
+  routes.clear()
+}

@@ -1,5 +1,5 @@
 {
-  "version": "0.0.9",
+  "version": "0.0.11",
   "name": "create-sweyn",
   "type": "module",
   "scripts": {
@@ -12,8 +12,9 @@
   "bin": {
     "create-sweyn": "bin/create-sweyn.js"
   },
-  "dependencies": {
-    "@types/node": "^22.6.1"
+  "devDependencies": {
+    "@types/node": "^22.6.1",
+    "@types/ws": "^8.5.13"
   },
   "packageManager": "pnpm@9.12.2"
 }
