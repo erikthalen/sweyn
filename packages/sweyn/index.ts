@@ -2,14 +2,9 @@ import path from 'node:path'
 import http from 'node:http'
 import fs from 'node:fs/promises'
 import { renderFile, renderVariables, renderLayout } from './renderer.ts'
-import { disconnectHMR, HMRServer, watchFilesAdded, withHMR } from './hmr.ts'
+import { destroyHRM, initHRM, injectHMR, watchFilesAdded } from './hmr.ts'
 import { createServer, middlewares, staticFolders } from './server.ts'
-import {
-  registerRoute,
-  routes,
-  withoutWildcards,
-  clearRoutes,
-} from './routes.ts'
+import { registerRoute, withoutWildcards, clearRoutes } from './routes.ts'
 import { createCms, getContent } from './cms.ts'
 import type { Config } from './types.ts'
 import api from './api.ts'
@@ -41,6 +36,21 @@ function defaultHandler(filename: string) {
   }
 }
 
+export function withHMR(handler, { fromString = false } = {}) {
+  if (process.env.NODE_ENV !== 'dev') {
+    return handler
+  }
+
+  if (fromString) {
+    return injectHMR(handler)
+  }
+
+  return async (...args) => {
+    const response = await handler(...args)
+    return injectHMR(response)
+  }
+}
+
 async function init(userConfig?: Config) {
   config = userConfig
 
@@ -49,7 +59,7 @@ async function init(userConfig?: Config) {
     port: config?.port || 3003,
   }
 
-  HMRServer()
+  initHRM()
 
   defaults.static.forEach(s => staticFolders.add(s))
 
@@ -131,18 +141,19 @@ async function init(userConfig?: Config) {
   /**
    * start server
    */
-  server = createServer()
+  if (!server) {
+    server = createServer()
 
-  server.listen(defaults.port, () =>
-    console.log(`http://localhost:${defaults.port}`)
-  )
+    server.listen(defaults.port, () =>
+      console.log(`http://localhost:${defaults.port}`)
+    )
+  }
 
   watchFilesAdded(() => {
     // cleanup
-    disconnectHMR()
     defaults.static.forEach(s => staticFolders.delete(s))
     clearRoutes()
-    server.close()
+    destroyHRM()
 
     // re-init
     init()
