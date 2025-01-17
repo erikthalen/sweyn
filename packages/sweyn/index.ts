@@ -1,19 +1,19 @@
 import path from 'node:path'
-import http from 'node:http'
+import http, { IncomingMessage, ServerResponse } from 'node:http'
 import fs from 'node:fs/promises'
 import { renderFile, renderVariables, renderLayout } from './renderer.ts'
 import { destroyHRM, initHRM, injectHMR, watchFilesAdded } from './hmr.ts'
 import { createServer, middlewares, staticFolders } from './server.ts'
 import { registerRoute, withoutWildcards, clearRoutes } from './routes.ts'
 import { createCms, getContent } from './cms.ts'
-import type { Config } from './types.ts'
+import type { Config, RouteHandler, RouteHandlerOptions } from './types.ts'
 import api from './api.ts'
 import { getFilenamesInDirectory, isNotFolder } from './utils.ts'
 import createDatabase from './db.ts'
 import { createAnalytics } from './analytics.ts'
 
 export let config: Config = {}
-let server: http.Server = null
+let server: http.Server | null = null
 
 const app = {
   version: generateVersion(),
@@ -36,23 +36,27 @@ function defaultHandler(filename: string) {
   }
 }
 
-export function withHMR(handler, { fromString = false } = {}) {
+export function withHMR(handler: RouteHandler | string) {
   if (process.env.NODE_ENV !== 'dev') {
     return handler
   }
 
-  if (fromString) {
+  if (typeof handler === 'string') {
     return injectHMR(handler)
   }
 
-  return async (...args) => {
-    const response = await handler(...args)
+  return async (
+    req: IncomingMessage,
+    res: ServerResponse,
+    options?: RouteHandlerOptions
+  ) => {
+    const response = await handler(req, res, options)
     return injectHMR(response)
   }
 }
 
 async function init(userConfig?: Config) {
-  config = userConfig
+  config = userConfig || config
 
   const defaults = {
     static: ['app', 'pages', 'sweyn'].concat(config?.static || []),
@@ -80,7 +84,7 @@ async function init(userConfig?: Config) {
 
   if (config?.admin) {
     createCms({
-      rootdir: config.root,
+      sweynRoot: config.root,
       username: config.admin.login,
       password: config.admin.password,
     })
@@ -120,7 +124,7 @@ async function init(userConfig?: Config) {
   snippets.forEach(async snippet => {
     const { name } = path.parse(snippet)
 
-    const handler = async (req, res) => {
+    const handler = async (req: IncomingMessage, res: ServerResponse) => {
       const { searchParams } = new URL('http://foo.com' + req.url)
       const file = await fs.readFile(path.join('./snippets', snippet))
 

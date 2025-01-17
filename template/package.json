@@ -9,7 +9,6 @@
     "start": "node server.config.ts"
   },
   "dependencies": {
-    "better-sqlite3": "^11.5.0",
-    "ws": "^8.18.0"
+    "better-sqlite3": "^11.5.0"
   }
 }

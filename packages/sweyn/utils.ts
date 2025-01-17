@@ -1,9 +1,10 @@
 import type { ObjectEncodingOptions } from 'node:fs'
 import fs from 'node:fs/promises'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import path from 'node:path'
 
 export async function getFilenamesInDirectory(
-  dir,
+  dir: string,
   options?:
     | (ObjectEncodingOptions & {
         withFileTypes?: false | undefined
@@ -20,11 +21,15 @@ export async function getFilenamesInDirectory(
   }
 }
 
-export function isNotFolder(filename) {
+export function isNotFolder(filename: string) {
   return path.extname(filename) !== ''
 }
 
-export function authenticate(req, res, login) {
+export function authenticate(
+  req: IncomingMessage,
+  res: ServerResponse,
+  login: { username: string; password: string }
+) {
   const { authorization } = req.headers
 
   if (!authorization) {

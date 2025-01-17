@@ -1,9 +1,5 @@
-import http, {
-  IncomingMessage,
-  ServerResponse,
-  type RequestListener,
-} from 'node:http'
-import fs, { createReadStream } from 'node:fs'
+import http, { type IncomingMessage, type ServerResponse } from 'node:http'
+import fs, { createReadStream, ReadStream } from 'node:fs'
 import { join, extname } from 'node:path'
 import { URL } from 'node:url'
 import {
@@ -13,7 +9,7 @@ import {
   withoutWildcards,
 } from './routes.ts'
 
-const CONTENT_TYPES = {
+const CONTENT_TYPES: Record<string, string> = {
   '.html': 'text/html',
   '.js': 'application/javascript',
   '.json': 'application/json',
@@ -50,7 +46,7 @@ const getFileFromFS = (
   })
 }
 
-export async function streamFileFromStaticFolder(filename) {
+export async function streamFileFromStaticFolder(filename: string) {
   try {
     return await Promise.any(
       Array.from(staticFolders).map(path => getFileFromFS(path, filename))
@@ -72,19 +68,24 @@ export async function readBody(req: IncomingMessage): Promise<string> {
   })
 }
 
-function isReadStream(value) {
-  return typeof value.on === 'function'
+function isReadStream(value: string | ReadStream) {
+  return typeof value !== 'string' && typeof value.on === 'function'
 }
 
-export function createRequestHandler(callback) {
-  return async function (req, res) {
+export function createRequestHandler(
+  callback: (
+    req: IncomingMessage,
+    res: ServerResponse
+  ) => Promise<ReadStream | string>
+) {
+  return async function (req: IncomingMessage, res: ServerResponse) {
     try {
       const result = await callback(req, res)
 
       if (res.headersSent) return
 
       if (result && isReadStream(result)) {
-        const { pathname } = new URL(req.url, 'https://foobar.com')
+        const { pathname } = new URL(req.url || '', 'https://foobar.com')
         const contentType = CONTENT_TYPES[extname(pathname)]
 
         if (contentType) res.setHeader('Content-Type', contentType)
@@ -93,7 +94,7 @@ export function createRequestHandler(callback) {
           res.setHeader('Cache-Control', 'max-age=31536000')
         }
 
-        result.pipe(res.writeHead(200))
+        ;(result as ReadStream).pipe(res.writeHead(200))
         return
       }
 
@@ -104,7 +105,8 @@ export function createRequestHandler(callback) {
       return res.writeHead(200).end(JSON.stringify(result))
     } catch (error) {
       console.log('error', error)
-      res.writeHead(error.status || 500).end(JSON.stringify(error))
+      const status = (error as { status: number }).status || 500
+      res.writeHead(status).end(JSON.stringify(error))
     }
   }
 }
@@ -112,7 +114,7 @@ export function createRequestHandler(callback) {
 const requestHandler = createRequestHandler(
   async (req: IncomingMessage, res: ServerResponse) => {
     const { method, url } = req
-    const { pathname, searchParams } = new URL(url, 'https://foobar.com')
+    const { pathname, searchParams } = new URL(url || '', 'https://foobar.com')
 
     // is request for a static file?
     if (extname(pathname)) {
@@ -134,7 +136,8 @@ const requestHandler = createRequestHandler(
 
     routeParts.forEach((part, idx) => {
       if (isWildcard(part)) {
-        options.route[withoutWildcards(part)] = urlParts[idx]
+        ;(options.route as Record<string, string>)[withoutWildcards(part)] =
+          urlParts[idx]
       }
     })
 
@@ -143,6 +146,8 @@ const requestHandler = createRequestHandler(
         middleware(req, res)
       }
     })
+
+    if (typeof handler === 'string') return handler
 
     return handler(req, res, options)
   }

@@ -1,6 +1,7 @@
-import fs from 'node:fs'
-import { WebSocketServer } from 'ws'
+import fs, { type FSWatcher } from 'node:fs'
+import { registerRoute } from './routes.ts'
 import { refreshAppVersion } from './index.ts'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 
 const dirs = [
   './index.html',
@@ -12,94 +13,90 @@ const dirs = [
   '/api',
 ]
 
-let wss = null
-let watcher: fs.FSWatcher = null
+let response: ServerResponse<IncomingMessage> | null = null
+let watchers: FSWatcher[] = []
 
-export function HMRServer() {
-  wss = new WebSocketServer({ port: 8576 })
+export function initHRM() {
+  dirs.forEach(dir => {
+    if (!fs.existsSync(dir)) return
 
-  wss.on('connection', function connection(ws) {
-    ws.send('Connected to HMR')
+    const watcher = fs.watch(dir, (eventType, filename) => {
+      if (filename === '.DS_Store') return
+      console.clear()
+      console.log('hmr reload:', filename)
 
-    dirs.forEach(dir => {
-      if (!fs.existsSync(dir)) return
+      refreshAppVersion()
 
-      watcher = fs.watch(dir, (eventType, filename) => {
-        if (filename === '.DS_Store') return
-        refreshAppVersion()
-        console.clear()
-        console.log('hmr reload:', filename)
-        ws.send('reload')
-      })
+      if (response) {
+        response.write('data: reload\n\n')
+      }
     })
+
+    watchers.push(watcher)
+  })
+
+  registerRoute({
+    route: '/hmr-update',
+    handler: (req, res) => {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      })
+
+      req.on('close', function () {
+        // request closed unexpectedly
+        res.end()
+        response = null
+      })
+
+      req.on('end', function () {
+        // request ended normally
+        res.end()
+        response = null
+      })
+
+      response = res
+    },
   })
 }
 
-const HMRClient = `const connection = new WebSocket('ws://localhost:8576')
-  connection.onmessage = e => {
-    if (e.data === 'reload') {
-      window.location.reload()
-    } else if (e.data === 'close') {
-      connection.close()
-    } else {
-      console.log(
-        '%c ' + e.data + ' ',
-        'color: green; font-weight:bold; background: lightgreen; border-radius: 3px'
-      )
-    }
-  }
-  connection.onclose = function () {
-    window.location.reload()
-  }`
+export function destroyHRM() {
+  watchers.forEach(watcher => watcher.close())
+  response = null
+}
 
-export function injectHMR(str) {
-  return str.replace(
+export function injectHMR(fileContent: string) {
+  return fileContent.replace(
     '<head>',
-    `<head><script type="module">${HMRClient}</script>`
+    `<head>
+    <script type="module">
+const source = new EventSource('/hmr-update')
+
+const style = 'color: green; font-weight:bold; background: lightgreen; border-radius: 3px'
+console.log('%c ' + 'Connected to HMR' + ' ', style)
+
+source.onmessage = () => window.location.reload()
+source.onerror = (error) => window.location.reload()
+    </script>`
   )
 }
 
-export function withHMR(handler, { fromString = false } = {}) {
-  if (process.env.NODE_ENV !== 'dev') {
-    return handler
-  }
-
-  if (fromString) {
-    return injectHMR(handler)
-  }
-
-  return async (...args) => {
-    const response = await handler(...args)
-    return injectHMR(response)
-  }
-}
-
-export function disconnectHMR() {
-  if (wss) {
-    wss.clients.forEach(ws => {
-      ws.send('close')
-      ws.terminate()
-    })
-    wss.close()
-  }
-
-  if (watcher) {
-    watcher.close()
-    watcher = null
-  }
-}
-
-export function watchFilesAdded(onFileAdded) {
+export function watchFilesAdded(onFileAdded: () => unknown) {
   const internalWatcher = fs.watch(
     './',
     { recursive: true },
     (eventType, filename) => {
       if (filename === '.DS_Store') return
+      if (eventType !== 'rename') return
 
-      if (eventType === 'rename') {
-        internalWatcher.close()
-        onFileAdded()
+      internalWatcher.close()
+
+      if (response) {
+        response.end()
       }
+
+      onFileAdded()
     }
   )
 }

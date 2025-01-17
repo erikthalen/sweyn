@@ -1,6 +1,6 @@
-import type { Route, RouteHandler } from './types.ts'
+import type { Route, RouteHandler, Routes, RoutesOfMethod } from './types.ts'
 
-export const routes = new Map()
+export const routes: Routes = new Map()
 
 // api
 export function registerRoute({ method = 'GET', route, handler }: Route) {
@@ -22,7 +22,7 @@ export function withoutWildcards(str: string): string {
   return str.replace('[', '').replace(']', '')
 }
 
-function getRouteHandler(method, route) {
+function getRouteHandler(method: string, route: string) {
   return routes.get(method)?.get(route)
 }
 
@@ -31,12 +31,13 @@ function sameDepth(arr1: any[], arr2: any[]): boolean {
   return arr1.length === arr2.length
 }
 
-export function asParts(str: string): string[] {
+export function asParts(str?: string): string[] {
+  if (!str) return []
   if (typeof str !== 'string') return str
   return str.substring(1).split('/')
 }
 
-function fuzzyFind(routes, url: string): string[] {
+function fuzzyFind(routes: RoutesOfMethod, url: string): string[] {
   const urlParts = asParts(url)
 
   let matches: string[] = []
@@ -79,7 +80,10 @@ function getRating(haystack: string, needle: string): number {
 export const getMatchingRoute = (
   url: string,
   method = 'GET'
-): { route: string | null; handler: RouteHandler | null } => {
+): {
+  route: string | null
+  handler: RouteHandler | string | null | undefined
+} => {
   const empty = { route: null, handler: null }
 
   try {
@@ -103,6 +107,6 @@ export const getMatchingRoute = (
   }
 }
 
-export function clearRoutes () {
+export function clearRoutes() {
   routes.clear()
 }

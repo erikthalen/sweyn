@@ -1,5 +1,5 @@
 {
-  "version": "0.0.11",
+  "version": "0.0.12",
   "name": "create-sweyn",
   "type": "module",
   "scripts": {
@@ -7,7 +7,7 @@
     "docs:build": "pnpm -r --parallel run docs:build",
     "tests": "pnpm -r --parallel run test",
     "soft-launch": "node scripts/release.js",
-    "release": "node scripts/release.js && node scripts/bump.js && npm publish"
+    "release": "node scripts/release.js && node scripts/bump.js && git tag v$npm_package_version && npm publish"
   },
   "bin": {
     "create-sweyn": "bin/create-sweyn.js"

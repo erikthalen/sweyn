@@ -1,6 +1,7 @@
-import fs from 'node:fs'
+import fs, { type FSWatcher } from 'node:fs'
 import { registerRoute } from './routes.ts'
 import { refreshAppVersion } from './index.ts'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 
 const dirs = [
   './index.html',
@@ -12,8 +13,8 @@ const dirs = [
   '/api',
 ]
 
-let response = null
-let watchers = []
+let response: ServerResponse<IncomingMessage> | null = null
+let watchers: FSWatcher[] = []
 
 export function initHRM() {
   dirs.forEach(dir => {
@@ -81,7 +82,7 @@ source.onerror = (error) => window.location.reload()
   )
 }
 
-export function watchFilesAdded(onFileAdded) {
+export function watchFilesAdded(onFileAdded: () => unknown) {
   const internalWatcher = fs.watch(
     './',
     { recursive: true },

@@ -21,11 +21,24 @@ export type Config = {
 export type Route = {
   method?: string
   route: string
-  handler: RouteHandler
+  handler: RouteHandler | string
 }
+
+export type RoutesOfMethod = Map<string, RouteHandler | string>
+
+export type Routes = Map<string, RoutesOfMethod>
+
+export type RouteHandlerOptions = Record<string, Record<string, string>>
 
 export type RouteHandler = (
   req: IncomingMessage,
   res: ServerResponse,
-  options?: Record<string, Record<string, string>>
+  options?: RouteHandlerOptions
 ) => any
+
+export type cmsConfig = {
+  contentRoot?: string
+  sweynRoot?: string
+  username: string
+  password: string
+}

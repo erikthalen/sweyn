@@ -5,58 +5,65 @@ import { registerRoute } from './routes.ts'
 import { readBody } from './server.ts'
 import { renderVariables } from './renderer.ts'
 import { authenticate } from './utils.ts'
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import type { cmsConfig, RouteHandlerOptions } from './types.ts'
 
-let rootDir = './'
-let rootdir = '.sweyn'
+let contentRoot = './'
+let sweynRoot = '.sweyn'
 
-async function saveFile(req, res) {
+async function saveFile(req: IncomingMessage) {
   try {
-
     const body = await readBody(req)
     const { filename, content } = Object.fromEntries(
       body.split('&').map(part => part.split('='))
     )
-  
+
     fs.mkdirSync('.' + path.dirname(filename), {
       recursive: true,
     })
-  
+
     const decodedContent = decodeURIComponent(content.replaceAll('+', ' '))
-  
+
     fs.writeFileSync(
-      path.join('.', rootDir, filename.replaceAll(' ', '-') + '.md'),
+      path.join('.', contentRoot, filename.replaceAll(' ', '-') + '.md'),
       decodedContent
     )
-  
+
     return `Saved ${filename} successfully`
-  } catch(error) {
+  } catch (error) {
     console.log(error)
   }
 }
 
-function getFilepath(file) {
-  return path.join('.', rootDir, file + '.md')
+function getFilepath(filename: string) {
+  return path.join('.', contentRoot, filename + '.md')
 }
 
-export function createCms(options) {
-  rootDir = options.root || './content'
+export function createCms(options: cmsConfig) {
+  contentRoot = options.contentRoot || './content'
 
-  if (options.rootdir) {
-    rootdir = options.rootdir
+  if (options.sweynRoot) {
+    sweynRoot = options.sweynRoot
   }
 
-  async function renderCms(req, res, opts) {
+  async function renderCms(
+    req: IncomingMessage,
+    res: ServerResponse,
+    opts?: RouteHandlerOptions
+  ) {
     authenticate(req, res, options)
     res.setHeader('Content-Type', 'text/html')
-    const index = await fsPromise.readFile(path.join(rootdir, 'cms.html'))
+    const index = await fsPromise.readFile(path.join(sweynRoot, 'cms.html'))
 
     try {
-      await fsPromise.readdir(`${rootDir}`)
+      await fsPromise.readdir(`${contentRoot}`)
     } catch (error) {
-      await fsPromise.mkdir(`${rootDir}`)
+      await fsPromise.mkdir(`${contentRoot}`)
     }
 
-    const pages = await fsPromise.readdir(`${rootDir}`, { encoding: 'utf8' })
+    const pages = await fsPromise.readdir(`${contentRoot}`, {
+      encoding: 'utf8',
+    })
 
     const menu = pages
       .map(page => {
@@ -70,8 +77,8 @@ export function createCms(options) {
 
     return renderVariables(index.toString(), {
       pages: menu,
-      content: getContent(opts.route.page),
-      filename: opts.route.page,
+      content: getContent(opts?.route.page),
+      filename: opts?.route.page,
     })
   }
 
@@ -89,7 +96,7 @@ export function createCms(options) {
     route: '/admin/api/pages',
     handler: (req, res) => {
       authenticate(req, res, options)
-      return fs.readdirSync(`.${rootDir}`, { encoding: 'utf8' })
+      return fs.readdirSync(`.${contentRoot}`, { encoding: 'utf8' })
     },
   })
 
@@ -98,7 +105,11 @@ export function createCms(options) {
     handler: (req, res) => {
       authenticate(req, res, options)
       const { searchParams } = new URL('http://foo.com' + req.url)
-      return getContent(searchParams.get('page'))
+      const filename = searchParams.get('page')
+
+      if (filename) {
+        return getContent(filename)
+      }
     },
   })
 
@@ -108,7 +119,7 @@ export function createCms(options) {
       authenticate(req, res, options)
       const { searchParams } = new URL('http://foo.com' + req.url)
       const filename = searchParams.get('page') || ''
-      const filepath = path.join('.', rootDir, filename)
+      const filepath = path.join('.', contentRoot, filename)
       fs.unlinkSync(filepath)
 
       res.writeHead(301, { Location: '/admin' }).end()
@@ -123,7 +134,7 @@ export function createCms(options) {
       const { searchParams } = new URL('http://foo.com' + req.url)
       const filename = searchParams.get('filename')?.replaceAll(' ', '-')
       fs.writeFileSync(
-        path.join('.', rootDir, filename + '.md'),
+        path.join('.', contentRoot, filename + '.md'),
         '# Start typing...'
       )
       res.writeHead(301, { Location: '/admin/' + filename }).end()
@@ -135,15 +146,17 @@ export function createCms(options) {
     route: '/admin/api/save',
     handler: (req, res) => {
       authenticate(req, res, options)
-      saveFile(req, res)
+      saveFile(req)
       res.writeHead(301, { Location: req.headers.referer }).end()
     },
   })
 }
 
-export function getContent(name) {
+export function getContent(filename?: string) {
+  if (!filename) return
+
   try {
-    return fs.readFileSync(getFilepath(name), { encoding: 'utf8' })
+    return fs.readFileSync(getFilepath(filename), { encoding: 'utf8' })
   } catch (error) {
     return null
   }

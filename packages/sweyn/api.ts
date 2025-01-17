@@ -7,8 +7,8 @@ async function readFiles(dir: string): Promise<string[]> {
   return filenames.filter(isNotFolder)
 }
 
-async function compileRoutes(rootdir, files) {
-  const endpoints = files.map(async filename => {
+async function compileRoutes(rootdir: string, filenames: string[]) {
+  const endpoints = filenames.map(async filename => {
     const { dir, name } = path.parse(filename)
     const [route, method] = name.split('.')
     const modules = await import(path.resolve(rootdir, filename))
