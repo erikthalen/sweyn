@@ -14,7 +14,7 @@ const colors = {
 }
 
 console.log(
-  `${colors.reset + colors.blue}Create a new sweyn app${colors.reset}`
+  `${colors.reset + colors.blue}🚀 Creating a new sweyn app${colors.reset}`
 )
 
 const name = process.argv[2]
@@ -59,13 +59,13 @@ async function copyTemplateFiles(name) {
     )
 
     console.log(
-      `${colors.reset + colors.green}Successfully created project in /${
+      `${colors.reset + colors.green}✅ Successfully created project in /${
         name + colors.reset
       }`
     )
 
     console.log(
-      `${colors.reset + colors.dim}Installing required packages...${
+      `${colors.reset + colors.dim}⚙️ Installing required packages...${
         colors.reset
       }`
     )
@@ -75,12 +75,12 @@ async function copyTemplateFiles(name) {
     const s = spawn('pnpm', ['install'], { stdio: 'inherit' })
 
     s.on('close', code => {
-      console.log('')
+      console.log('--------------------------------------')
       console.log(`${colors.reset + colors.blue}Run:${colors.reset}`)
       console.log(`${colors.reset + colors.green}$ cd ${name}${colors.reset}`)
       console.log(`${colors.reset + colors.green}$ pnpm run dev${colors.reset}`)
       console.log(`${colors.reset + colors.blue}to get started${colors.reset}`)
-      console.log('')
+      console.log('--------------------------------------')
       process.exit()
     })
   } catch (error) {

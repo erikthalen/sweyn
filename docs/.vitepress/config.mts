@@ -17,7 +17,18 @@ export default defineConfig({
         items: [
           { text: 'Getting started', link: '/getting-started' },
           { text: 'Config', link: '/config' },
-          { text: 'Directories', link: '/directories' },
+          // { text: 'Directories', link: '/directories' },
+        ],
+      },
+      {
+        text: 'Directories',
+        items: [
+          { text: '/api', link: '/directories/api' },
+          { text: '/app', link: '/directories/app' },
+          { text: '/content', link: '/directories/content' },
+          { text: '/pages', link: '/directories/pages' },
+          { text: '/public', link: '/directories/public' },
+          { text: '/snippets', link: '/directories/snippets' },
         ],
       },
       {

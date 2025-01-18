@@ -1,50 +1,31 @@
 # CMS
 
-File based CMS that stores `.md` files.
-
-Accessable on the `/admin` url.
+A **file-based CMS** that stores content in `.md` files. It is accessible via the `/admin` URL for managing content.
 
 ## Activate
 
-Add CMS object to config in `./server.config.ts`, and supply login and password:
+To activate the CMS, add an `admin` configuration to your `./server.config.ts` file and supply a `login` and `password` for access:
 
 ```ts
 import { createServer } from './.sweyn/index.ts'
 
 createServer({
-  admin: { // [!code ++]
-    login: 'admin', // [!code ++]
-    password: 'admin', // [!code ++]
-  }, // [!code ++]
-})
-```
-
-Use the `getContent('filename')` to get content from the `/content` folder:
-
-```ts
-import { createServer } from './.sweyn/index.ts' // [!code --]
-import { createServer, getContent } from './.sweyn/index.ts' // [!code ++]
-
-createServer({
   admin: {
-    login: 'admin',
-    password: 'admin',
+    login: 'admin', // Admin username
+    password: 'admin', // Admin password
   },
-  routes: [ // [!code ++]
-    { // [!code ++]
-      route: '/article/[page]', // [!code ++]
-      handler: async (req, res, { route }) => { // [!code ++]
-        return getContent(route.page) // [!code ++]
-      }, // [!code ++]
-    }, // [!code ++]
-  ], // [!code ++]
 })
 ```
 
-It's in raw markdown, install a markdown-to-html parser of choice, and parse the content:
+Once activated, the CMS can be accessed at `/admin`, where you can create, update, and delete content stored in the `/content` directory.
+
+## Accessing CMS Content
+
+You can use the `getContent('filename')` function to retrieve content from the `/content` folder. The filename passed to `getContent` should match the name of the Markdown (`.md`) file you wish to load.
+
+### Example: Using `getContent` in a Route
 
 ```ts
-import { marked } from 'marked' // [!code ++]
 import { createServer, getContent } from './.sweyn/index.ts'
 
 createServer({
@@ -56,20 +37,26 @@ createServer({
     {
       route: '/article/[page]',
       handler: async (req, res, { route }) => {
-        return getContent(route.page) // [!code --]
-        return await marked.parse(getContent(route.page)) // [!code ++]
+        return getContent(route.page)
       },
     },
   ],
 })
 ```
 
-Run the parsed html through `renderFile()` in order to get the file from the `/pages` folder, with the layout applied:
+This example creates a dynamic route `/article/[page]` where the `page` parameter is used to retrieve content from the corresponding Markdown file in the `/content` folder.
+
+On the route `/article/about`, the file `/content/about.md` would be loaded.
+
+## Parsing Markdown
+
+The content fetched by `getContent()` is raw Markdown, so you’ll need a Markdown-to-HTML parser to convert it to HTML. You can use a library like [marked](https://marked.js.org/) to parse the content.
+
+### Example: Using `marked` to Parse Content
 
 ```ts
 import { marked } from 'marked'
-import { createServer, getContent } from './.sweyn/index.ts' // [!code --]
-import { createServer, getContent, renderFile } from './.sweyn/index.ts' // [!code ++]
+import { createServer, getContent } from './.sweyn/index.ts'
 
 createServer({
   admin: {
@@ -80,26 +67,53 @@ createServer({
     {
       route: '/article/[page]',
       handler: async (req, res, { route }) => {
-        return await marked.parse(getContent(route.page)) // [!code --]
-        return renderFile('cms-page', { // [!code ++]
-          content: await marked.parse(getContent(route.page)), // [!code ++]
-        }) // [!code ++]
+        return await marked.parse(getContent(route.page)) // Parse the Markdown content
       },
     },
   ],
 })
 ```
 
+In this example, `getContent(route.page)` fetches the raw Markdown file, and `marked.parse()` converts the content to HTML.
+
+## Rendering Content with Layout
+
+To render the parsed HTML content within the page layout, use the `renderFile()` function. This function takes the target HTML file (from `/pages`) and injects the parsed content as a variable.
+
+### Example: Rendering Content with Layout
+
+```ts
+import { marked } from 'marked'
+import { createServer, getContent, renderFile } from './.sweyn/index.ts'
+
+createServer({
+  admin: {
+    login: 'admin',
+    password: 'admin',
+  },
+  routes: [
+    {
+      route: '/article/[page]',
+      handler: async (req, res, { route }) => {
+        return renderFile('cms-page', {
+          // Render the content inside a layout
+          content: await marked.parse(getContent(route.page)), // Parse and pass the content
+        })
+      },
+    },
+  ],
+})
+```
+
+In this case, the `getContent(route.page)` fetches the raw Markdown file corresponding to the `page` parameter, and `marked.parse()` converts it to HTML. The parsed HTML is then passed to the `renderFile()` function as the `content` variable, which will be injected into the `/pages/cms-page.html` template.
+
+### Example HTML Template (`/pages/cms-page.html`)
+
 ```html
 <!-- /pages/cms-page.html -->
 <p>Page with CMS content</p>
 {{ content }}
+<!-- The parsed content will be injected here -->
 ```
 
-Because the route is `/article/[page]`, the handler's option object will be filled with `option.route` containing the value of the current `[page]` uri.
-
-Use the `getContent(route.page)` to get content of the markdown file with the name matching the uri.
-
-Run this through a markdown-to-html parser of choice, f.ex. [marked](https://marked.js.org/)
-
-Pass this to the second argument of `renderFile()`, on a key matching the variable in your target `.html` file.
+This example renders the parsed content inside a layout defined in the `cms-page.html` template. The `content` placeholder in the template is replaced with the parsed HTML from the Markdown file.
