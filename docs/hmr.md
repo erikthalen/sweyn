@@ -4,7 +4,8 @@
 
 The HMR functionality is powered by **server-sent events** (SSE), which allows the server to push updates to the client when changes occur.
 
-> **Note:** This is a "fake" HMR. While the browser automatically reloads the updated content, **all application state will be lost** upon each reload. It is not a true HMR where the state is preserved during updates.
+> [!NOTE]
+> This is a "fake" HMR. While the browser automatically reloads the updated content, **all application state will be lost** upon each reload. It is not a true HMR where the state is preserved during updates.
 
 ## Automatic Refresh on File Save
 

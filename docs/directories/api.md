@@ -1,4 +1,4 @@
-# API Server Documentation
+# API <Badge type="tip" text="server" />
 
 This documentation provides an overview of how to create and interact with an API server using the framework. Each file in the `/api` directory represents an individual server-side API endpoint, with support for different HTTP methods like GET, POST, etc.
 

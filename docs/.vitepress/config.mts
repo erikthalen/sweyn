@@ -2,10 +2,12 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: 'sweyn docs',
+  title: 'Sweyn',
   base: '/sweyn/',
+  head: [['link', { rel: 'icon', href: './S.svg' }]],
   cleanUrls: true,
   themeConfig: {
+    logo: '/S.svg',
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/getting-started' },
@@ -32,9 +34,10 @@ export default defineConfig({
         ],
       },
       {
-        text: 'API',
+        text: 'Features',
         items: [
           { text: 'CMS', link: '/cms' },
+          { text: 'Analytics', link: '/analytics' },
           { text: 'Database', link: '/database' },
           { text: 'Renderer', link: '/renderer' },
           { text: 'HMR', link: '/hmr' },

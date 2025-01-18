@@ -1,5 +1,3 @@
-# Sweyn
-
 **Sweyn** is a lightweight **server-side web framework** designed to make building modern web applications as simple as possible. With **no build step or bundling**, you can focus on what matters most: writing your code.
 
 Sweyn provides a set of powerful, file-based tools that integrate seamlessly to help you develop quickly and easily:
