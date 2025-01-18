@@ -2,8 +2,5 @@
   "name": "sweyn",
   "version": "0.0.0",
   "type": "module",
-  "main": "index.ts",
-  "dependencies": {
-    "better-sqlite3": "^11.5.0"
-  }
+  "main": "index.ts"
 }

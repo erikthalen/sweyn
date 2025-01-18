@@ -7,6 +7,10 @@ createTable('foobar', {
   first: 'string',
 })
 
+createTable('fresh', {
+  name: 'string',
+})
+
 createServer({
   root: '../packages/sweyn',
   analytics: true,

@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import Database from 'better-sqlite3'
+import { DatabaseSync } from 'node:sqlite'
 import { registerRoute } from './routes.ts'
 
-let dbs = []
+let dbs: { name: string; db: DatabaseSync }[] = []
 
 async function backupDatabases() {
   if (!(await fs.stat('./backups').catch(e => false))) {
@@ -14,17 +14,18 @@ async function backupDatabases() {
     const { name: dbname } = path.parse(name)
 
     const filename = `./backups/${dbname}-${Date.now()}.db`
+    db.exec(`VACUUM INTO '${filename}';`)
 
-    await db.backup(filename)
+    console.log('Done backing up:', filename)
   })
 }
 
 export default function createDatabase(name = 'data.db') {
-  const db = new Database(name)
+  const db = new DatabaseSync(name)
 
   dbs.push({ name, db })
 
-  db.pragma('journal_mode = WAL')
+  // db.pragma('journal_mode = WAL')
 
   registerRoute({
     route: '/db/backup',

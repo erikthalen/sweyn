@@ -1,13 +1,15 @@
-**Sweyn** is a lightweight **server-side web framework** designed to make building modern web applications as simple as possible. With **no build step or bundling**, you can focus on what matters most: writing your code.
+# Server with Everything You Need
 
-Sweyn provides a set of powerful, file-based tools that integrate seamlessly to help you develop quickly and easily:
+**Sweyn** is a lightweight, **server-side web framework** designed for simplicity and ease of use in building web applications. With no build step or bundling required.
 
-- **File-based routing**: Automatically map files in the `/pages` directory to routes in your application, simplifying your routing setup.
-- **File-based API**: Define API endpoints in the `/api` folder. Each file in this directory automatically becomes an endpoint, making it easy to build server-side logic.
-- **HMR (Hot Module Replacement)**: Enjoy a fast development workflow with automatic browser refreshes on file save. **Note**: This is a "fake" HMR, meaning the browser reloads entirely and application state will be lost on each update.
-- **Static file-based Markdown CMS**: Easily manage content using Markdown files in the `/content` folder, which can be fetched and rendered dynamically with Markdown-to-HTML parsing.
-- **Minimal HTML rendering engine**: Sweyn’s rendering engine allows you to easily inject dynamic content into your HTML files with a simple template system.
+The entire framework is contained in just **42KB**, making it a highly efficient solution for building small to medium-sized applications. Additionally, the complete source code is included in the starter template, allowing full transparency and flexibility in how it operates.
 
-Whether you're building a small prototype or a larger-scale application, **Sweyn** is here to handle the server-side logic and make the process as seamless as possible.
+Sweyn provides several file-based tools for rapid development:
 
-**(human written note):** You probably don't want to use this for a "larger-scale application", lol
+- **File-based routing**: Automatically maps files in the `/pages` directory to routes in your application, reducing the need for manual route configuration.
+- **File-based API**: Allows you to define API endpoints directly in the `/api` folder, with each file automatically becoming an endpoint.
+- **HMR (Hot Module Replacement)**: Provides automatic browser refreshes on file save during development. **Note**: This is a "fake" HMR, meaning the browser reloads entirely, and application state will be lost on each update.
+- **Static file-based Markdown CMS**: Allows you to manage content with Markdown files in the `/content` folder, which can be fetched and rendered dynamically using a Markdown-to-HTML parser.
+- **Minimal HTML rendering engine**: A lightweight rendering engine that injects dynamic content into your HTML files using a simple template system.
+
+The **Sweyn** framework is designed for small to mid-sized applications, where simplicity, rapid development, and transparency are essential.

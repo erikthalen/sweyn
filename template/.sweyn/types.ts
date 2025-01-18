@@ -1,3 +1,4 @@
+import type { ReadStream } from 'node:fs'
 import type {
   IncomingMessage,
   ServerResponse,
@@ -7,7 +8,6 @@ import type {
 export type Config = {
   root?: string
   port?: number
-  HMRPort?: number
   static?: string | string[]
   analytics?: boolean
   admin?: {

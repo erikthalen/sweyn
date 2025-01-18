@@ -2,7 +2,7 @@
 
 ## Installation
 
-To get started with a new project, follow these simple steps:
+To get started with a new project, follow these steps:
 
 1. **Create a new project** by running the following command:
 

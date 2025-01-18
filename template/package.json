@@ -7,8 +7,5 @@
   "scripts": {
     "dev": "NODE_ENV=dev node --watch server.config.ts",
     "start": "node server.config.ts"
-  },
-  "dependencies": {
-    "better-sqlite3": "^11.5.0"
   }
 }
