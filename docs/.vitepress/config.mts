@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: 'Sweyn',
+  title: 'Sweyn Docs',
   base: '/sweyn/',
   head: [['link', { rel: 'icon', href: './S.svg' }]],
   cleanUrls: true,

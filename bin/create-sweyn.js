@@ -3,6 +3,7 @@ import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
+import packagejson from '../package.json' with { type: "json" }
 
 const colors = {
   reset: '\x1b[0m',
@@ -14,7 +15,7 @@ const colors = {
 }
 
 console.log(
-  `${colors.reset + colors.blue}🚀 Creating a new sweyn app${colors.reset}`
+  `${colors.reset + colors.blue}🚀 Creating a new sweyn app, v${packagejson.version}${colors.reset}`
 )
 
 const name = process.argv[2]

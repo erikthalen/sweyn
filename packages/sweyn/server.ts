@@ -82,6 +82,8 @@ export function createRequestHandler(
     try {
       const result = await callback(req, res)
 
+      if (req.url === '/hmr-update') console.log('HANDLER', res.headersSent)
+
       if (res.headersSent) return
 
       if (result && isReadStream(result)) {
@@ -115,6 +117,28 @@ const requestHandler = createRequestHandler(
   async (req: IncomingMessage, res: ServerResponse) => {
     const { method, url } = req
     const { pathname, searchParams } = new URL(url || '', 'https://foobar.com')
+
+    // if (req.url === '/hmr-update') {
+    //   console.log('HMR')
+    //   res.writeHead(200, {
+    //     'Content-Type': 'text/event-stream',
+    //     'Cache-Control': 'no-cache',
+    //     Connection: 'keep-alive',
+    //     'Transfer-Encoding': 'chunked',
+    //   })
+
+    //   res.flushHeaders()
+
+    //   res.on('close', () => {
+    //     console.log('closing')
+    //     res.end()
+    //   })
+
+    //   req.on('close', () => {
+    //     console.log('closing')
+    //     res.end()
+    //   })
+    // }
 
     // is request for a static file?
     if (extname(pathname)) {

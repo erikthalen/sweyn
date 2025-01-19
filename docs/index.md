@@ -2,7 +2,7 @@
 
 **Sweyn** is a lightweight, **server-side web framework** designed for simplicity and ease of use in building web applications. With no build step or bundling required.
 
-The entire framework is contained in just **42KB**, making it a highly efficient solution for building small to medium-sized applications. Additionally, the complete source code is included in the starter template, allowing full transparency and flexibility in how it operates.
+The entire framework is contained in just **36KB**, making it a highly efficient solution for building small to medium-sized applications. Additionally, the complete source code is included in the starter template, allowing full transparency and flexibility in how it operates.
 
 Sweyn provides several file-based tools for rapid development:
 

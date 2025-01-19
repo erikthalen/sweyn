@@ -14,6 +14,7 @@ const dirs = [
 ]
 
 let response: ServerResponse<IncomingMessage> | null = null
+let responses: ServerResponse<IncomingMessage>[] = []
 let watchers: FSWatcher[] = []
 
 export function initHRM() {
@@ -22,13 +23,14 @@ export function initHRM() {
 
     const watcher = fs.watch(dir, (eventType, filename) => {
       if (filename === '.DS_Store') return
-      console.clear()
+
       console.log('hmr reload:', filename)
 
       refreshAppVersion()
 
-      if (response) {
+      if (response && !response.closed) {
         response.write('data: reload\n\n')
+        response.end()
       }
     })
 
@@ -38,23 +40,14 @@ export function initHRM() {
   registerRoute({
     route: '/hmr-update',
     handler: (req, res) => {
+      response?.end()
+
       res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
+        'Content-Type': 'text/html',
+        'Transfer-Encoding': 'chunked',
       })
 
-      req.on('close', function () {
-        // request closed unexpectedly
-        res.end()
-        response = null
-      })
-
-      req.on('end', function () {
-        // request ended normally
-        res.end()
-        response = null
-      })
+      console.log('connect')
 
       response = res
     },
@@ -63,7 +56,7 @@ export function initHRM() {
 
 export function destroyHRM() {
   watchers.forEach(watcher => watcher.close())
-  response = null
+  responses = []
 }
 
 export function injectHMR(fileContent: string) {
@@ -71,16 +64,46 @@ export function injectHMR(fileContent: string) {
     '<head>',
     `<head>
     <script type="module">
-const source = new EventSource('/hmr-update')
-
-const style = 'color: green; font-weight:bold; background: lightgreen; border-radius: 3px'
-console.log('%c ' + 'Connected to HMR' + ' ', style)
-
-source.onmessage = () => window.location.reload()
-source.onerror = (error) => window.location.reload()
+    try {
+      const style = 'color: green; font-weight:bold; background: lightgreen; border-radius: 3px'
+      console.log('%c ' + 'Connected to HMR' + ' ', style)
+  
+      const res = await fetch('/hmr-update')
+      const text = await res.text()
+      console.log(text)
+  
+      window.location.reload()
+    } catch (error) {
+      console.log(error)
+    }
     </script>`
   )
 }
+// export function injectHMR(fileContent: string) {
+//   return fileContent.replace(
+//     '<head>',
+//     `<head>
+//     <script type="module">
+// const source = new EventSource('/hmr-update')
+
+// const style = 'color: green; font-weight:bold; background: lightgreen; border-radius: 3px'
+// console.log('%c ' + 'Connected to HMR' + ' ', style)
+
+// source.onmessage = (e) => {
+// console.log('data:', e)
+// // window.location.reload()
+// }
+// // source.onerror = (error) => {
+// // // window.location.reload()
+// // console.log(error)
+// //   }
+// source.onend = () => {
+// source.close()
+// console.log('close')
+//   }
+//     </script>`
+//   )
+// }
 
 export function watchFilesAdded(onFileAdded: () => unknown) {
   const internalWatcher = fs.watch(
@@ -92,9 +115,12 @@ export function watchFilesAdded(onFileAdded: () => unknown) {
 
       internalWatcher.close()
 
-      if (response) {
-        response.end()
-      }
+      responses.forEach(response => {
+        if (response) {
+          console.log('watched files change')
+          response.end()
+        }
+      })
 
       onFileAdded()
     }

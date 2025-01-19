@@ -56,7 +56,7 @@ export function createAnalytics(config) {
   function recordVisitor(req: IncomingMessage) {
     const { userAgent, remoteIp } = visitorFromRequest(req)
 
-    const { pathname } = new URL(req.url, 'https://foobar.com')
+    const { pathname } = new URL(req.url || '', 'https://foobar.com')
 
     if (pathname === '/analytics') return
     if (isBot(userAgent)) return
@@ -64,10 +64,12 @@ export function createAnalytics(config) {
 
     const referer = req.headers.referrer || req.headers.referer
 
-    db.prepare('INSERT INTO visitor (ip, referer) VALUES (?, ?)').run(
-      remoteIp,
-      referer
-    )
+    if (typeof remoteIp === 'string' && referer) {
+      db.prepare('INSERT INTO visitor (ip, referer) VALUES (?, ?)').run(
+        remoteIp,
+        referer
+      )
+    }
   }
 
   return {

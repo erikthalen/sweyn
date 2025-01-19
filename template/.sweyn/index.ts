@@ -2,7 +2,7 @@ import path from 'node:path'
 import http, { IncomingMessage, ServerResponse } from 'node:http'
 import fs from 'node:fs/promises'
 import { renderFile, renderVariables, renderLayout } from './renderer.ts'
-import { destroyHRM, initHRM, injectHMR, watchFilesAdded } from './hmr.ts'
+// import { destroyHRM, HMRServer, injectHMR, watchFilesAdded } from './hmr.ts'
 import { createServer, middlewares, staticFolders } from './server.ts'
 import { registerRoute, withoutWildcards, clearRoutes } from './routes.ts'
 import { createCms, getContent } from './cms.ts'
@@ -11,6 +11,12 @@ import api from './api.ts'
 import { getFilenamesInDirectory, isNotFolder } from './utils.ts'
 import createDatabase from './db.ts'
 import { createAnalytics } from './analytics.ts'
+import {
+  disconnectHMR,
+  HMRServer,
+  injectHMR,
+  watchFilesAdded,
+} from './hmr-ws.ts'
 
 export let config: Config = {}
 let server: http.Server | null = null
@@ -63,7 +69,8 @@ async function init(userConfig?: Config) {
     port: config?.port || 3003,
   }
 
-  initHRM()
+  // initHRM()
+  HMRServer()
 
   defaults.static.forEach(s => staticFolders.add(s))
 
@@ -155,9 +162,10 @@ async function init(userConfig?: Config) {
 
   watchFilesAdded(() => {
     // cleanup
+    disconnectHMR()
     defaults.static.forEach(s => staticFolders.delete(s))
     clearRoutes()
-    destroyHRM()
+    server?.close()
 
     // re-init
     init()

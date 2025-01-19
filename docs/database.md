@@ -1,8 +1,8 @@
 # Database
 
-The framework provides a small API for handling **SQLite databases**, powered by the [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) library. It allows you to easily create and interact with SQLite databases directly in your server-side code.
+The framework provides a small API for handling **SQLite databases**, powered by the [node:sqlite](https://nodejs.org/api/sqlite.html) library. It allows you to easily create and interact with SQLite databases directly in your server-side code.
 
-The **database instance (`db`)** returned by `createDatabase()` is an instance of the `Database` class from [better-sqlite3](https://github.com/WiseLibs/better-sqlite3). This gives you access to all the features and methods provided by `better-sqlite3` for querying and managing your SQLite database.
+The **database instance (`db`)** returned by `createDatabase()` is an instance of the `DatabaseSync` class from [node:sqlite](https://nodejs.org/api/sqlite.html). This gives you access to all the features and methods provided by `node:sqlite` for querying and managing your SQLite database.
 
 ## Creating and Managing Databases
 
@@ -47,15 +47,14 @@ console.log(user);
 - **`db.prepare(...).run(...)`**: Inserts a new user into the table.
 - **`db.prepare(...).get(...)`**: Retrieves the user record with the first name "John".
 
-### `db` – Instance of [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
+### `db` – Instance of [node:sqlite](https://nodejs.org/api/sqlite.html)
 
-The `db` object returned by `createDatabase()` is an instance of the `Database` class from the [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) library. It allows you to perform SQL operations, such as:
+The `db` object returned by `createDatabase()` is an instance of the `Database` class from the [node:sqlite](https://nodejs.org/api/sqlite.html) library. It allows you to perform SQL operations, such as:
 
 - **Preparing statements**: `db.prepare()` allows you to prepare SQL statements, which you can execute using `.run()` for inserts/updates, `.get()` for fetching a single row, or `.all()` for fetching multiple rows.
 - **Transactions**: You can use `db.transaction()` to wrap multiple queries in a transaction, ensuring they are executed atomically.
-- **Database management**: `better-sqlite3` offers advanced features like automatic database journaling, caching, and more.
 
-For full documentation on `better-sqlite3` and its methods, refer to the official [better-sqlite3 GitHub page](https://github.com/WiseLibs/better-sqlite3).
+For full documentation on `node:sqlite` and its methods, refer to the official [node:sqlite page](https://nodejs.org/api/sqlite.html).
 
 ---
 
