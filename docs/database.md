@@ -56,8 +56,6 @@ The `db` object returned by `createDatabase()` is an instance of the `Database` 
 
 For full documentation on `node:sqlite` and its methods, refer to the official [node:sqlite page](https://nodejs.org/api/sqlite.html).
 
----
-
 ## Backup Database
 
 To create a backup of all databases, you can trigger the backup functionality by sending a request to the `/db/backup` route. This will create backup copies of all the databases in a folder called `./backups`.

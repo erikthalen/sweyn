@@ -9,7 +9,17 @@ const packageJSONSrc = await fs.readFile(path.join(source, 'package.json'))
 const packageJSON = await fs.readFile(path.join(destination, 'package.json'))
 
 const src = JSON.parse(packageJSONSrc)
-const dest = JSON.parse(packageJSON)
+const dest = JSON.parse(packageJSON || {})
+
+/**
+ * remove old .sweyn folder
+ */
+await fs.rm(path.join(destination, sweynDir), {
+  recursive: true,
+  force: true,
+})
+
+await fs.mkdir(path.join(destination, sweynDir))
 
 await fs.writeFile(
   path.join(destination, 'package.json'),

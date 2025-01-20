@@ -5,12 +5,27 @@ import createDatabase from './db.ts'
 import { registerRoute } from './routes.ts'
 import { renderVariables } from './renderer.ts'
 import { authenticate } from './utils.ts'
+import type { DatabaseSync } from 'node:sqlite'
 
-export function createAnalytics(config) {
+type DBRecord = {
+  created_at: string
+  ip: string
+  referer: string
+}
+
+type AnalyticsConfig = {
+  root?: string
+  admin: {
+    login: string
+    password: string
+  }
+}
+
+export function createAnalytics(config: AnalyticsConfig) {
   const { db, createTable } = createDatabase('analytics.db')
 
   createTable('visitor', {
-    ip: 'number',
+    ip: 'string',
     referer: 'string',
   })
 
@@ -18,21 +33,23 @@ export function createAnalytics(config) {
 
   registerRoute({
     route: '/analytics',
-    handler: async (req, res, { query }) => {
+    handler: async (req, res) => {
       authenticate(req, res, {
         username: config.admin.login,
         password: config.admin.password,
       })
 
       const fileContent = await fs.readFile(
-        path.join(config.root, 'analytics.html')
+        path.join(config.root || '', 'analytics.html')
       )
 
       const pretty = getData(db, { days: 365, resolution: '1 day' })
 
-      const maxValue = Math.max(...pretty.map(v => v[1]))
+      const maxValue = Math.max(...pretty.map(v => v[1] || 0))
 
       const html = pretty.reduce((acc, cur, i, arr) => {
+        if (!cur[1]) return acc
+
         const li = `
         <tr>
           <th>${cur[0]}</th>
@@ -60,14 +77,15 @@ export function createAnalytics(config) {
 
     if (pathname === '/analytics') return
     if (isBot(userAgent)) return
-    if (isRegistered(db, remoteIp)) return
+    if (!remoteIp || isRegistered(db, remoteIp)) return
 
     const referer = req.headers.referrer || req.headers.referer
+    const refererStr = Array.isArray(referer) ? referer[0] : referer
 
-    if (typeof remoteIp === 'string' && referer) {
+    if (typeof remoteIp === 'string' && refererStr) {
       db.prepare('INSERT INTO visitor (ip, referer) VALUES (?, ?)').run(
         remoteIp,
-        referer
+        refererStr
       )
     }
   }
@@ -77,7 +95,7 @@ export function createAnalytics(config) {
   }
 }
 
-function getData(db, { days = 31, resolution = '1 hour' }) {
+function getData(db: DatabaseSync, { days = 31, resolution = '1 hour' }) {
   let query = ''
 
   switch (days) {
@@ -99,9 +117,9 @@ function getData(db, { days = 31, resolution = '1 hour' }) {
     }
   }
 
-  const data = db.prepare(query).all()
+  const data = db.prepare(query).all() as DBRecord[]
 
-  const resolutions = {
+  const resolutions: Record<string, number> = {
     '1 second': 1000,
     '1 minute': 1000 * 60,
     '1 hour': 1000 * 60 * 60,
@@ -115,14 +133,15 @@ function getData(db, { days = 31, resolution = '1 hour' }) {
 
   const grouped = Object.groupBy(
     data,
-    ({ created_at }) => Math.floor(new Date(created_at).getTime() / res) * res
+    ({ created_at }: DBRecord) =>
+      Math.floor(new Date(created_at).getTime() / res) * res
   )
 
   const sorted = Object.entries(grouped).toSorted((a, b) => {
     return a[0] < b[0] ? -1 : 1
   })
 
-  const pretty = sorted.map(([key, value]): [string, number] => {
+  const pretty = sorted.map(([key, value]): [string, number | undefined] => {
     const date = new Date(parseInt(key))
 
     const showTime = ['1 second', '1 minute', '1 hour'].includes(resolution)
@@ -139,13 +158,13 @@ function getData(db, { days = 31, resolution = '1 hour' }) {
     const formatter = new Intl.DateTimeFormat('da-DK', options)
     const formattedDate = formatter.format(date)
 
-    return [formattedDate, value.length]
+    return [formattedDate, value?.length]
   })
 
   return pretty
 }
 
-function isRegistered(db, ip) {
+function isRegistered(db: DatabaseSync, ip: string) {
   return db
     .prepare(
       `SELECT ip, created_at FROM visitor WHERE ip = ? AND created_at >= datetime('now', '-1 hour')`
@@ -157,16 +176,19 @@ function visitorFromRequest(req: IncomingMessage) {
   const userAgent = req.headers['user-agent']
   const remoteIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
 
-  return { userAgent, remoteIp }
+  return {
+    userAgent,
+    remoteIp: Array.isArray(remoteIp) ? remoteIp[0] : remoteIp,
+  }
 }
 
-function isBot(userAgent) {
+function isBot(userAgent: string = '') {
   return /(bot|check|cloud|crawler|download|monitor|preview|scan|spider|google|qwantify|yahoo|HeadlessChrome)/i.test(
     userAgent
   )
 }
 
-export function generateFakeVisitors(db, count) {
+export function generateFakeVisitors(db: DatabaseSync, count: number) {
   db.exec(`CREATE TABLE IF NOT EXISTS visitor (
     id 'integer primary key autoincrement',
     created_at 'date',

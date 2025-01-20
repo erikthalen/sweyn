@@ -1,7 +1,6 @@
 import fs, { type FSWatcher } from 'node:fs'
 import { WebSocketServer, WebSocket } from 'ws'
 import { refreshAppVersion } from './index.ts'
-import type { IncomingMessage } from 'node:http'
 import type { RouteHandler } from './types.ts'
 
 const dirs = [
@@ -18,9 +17,9 @@ let wss: any = null
 let watcher: FSWatcher | null = null
 
 export function HMRServer() {
-  const wss = new WebSocketServer({ port: 8576 })
+  wss = new WebSocketServer({ port: 8576 })
 
-  wss.on('connection', function connection(ws) {
+  wss.on('connection', function connection(ws: WebSocket) {
     ws.send('Connected to HMR')
 
     dirs.forEach(dir => {
