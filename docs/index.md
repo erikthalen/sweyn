@@ -1,4 +1,4 @@
-# Server with Everything You Need
+# Server With Everything You Need
 
 **Sweyn** is a lightweight, **server-side web framework** designed for simplicity and ease of use in building web applications. With no build step or bundling required.
 

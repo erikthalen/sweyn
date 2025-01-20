@@ -42,8 +42,8 @@ The second argument passed to `renderFile()` is an object where the **keys** are
 
 In this template, `{{ content }}` and `{{ name }}` are placeholders that will be replaced with the corresponding values from the `renderFile()` call:
 
-- `{{ content }}` will be replaced with the HTML string passed in the `content` variable.
-- `{{ name }}` will be replaced with the value of the `name` variable.
+- <code v-pre>{{ content }}</code> will be replaced with the HTML string passed in the `content` variable.
+- <code v-pre>{{ name }}</code> will be replaced with the value of the `name` variable.
 
 ### Example Output:
 
@@ -53,4 +53,4 @@ In this template, `{{ content }}` and `{{ name }}` are placeholders that will be
 <p>My name is Sweyn</p>
 ```
 
-In this case, when the route `/` is accessed, the content `Hello World!` will be injected into the `{{ content }}` placeholder, and `Sweyn` will be inserted into `{{ name }}`.
+In this case, when the route `/` is accessed, the content `Hello World!` will be injected into the <code v-pre>{{ content }}</code> placeholder, and `Sweyn` will be inserted into <code v-pre>{{ name }}</code>.

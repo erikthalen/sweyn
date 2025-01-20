@@ -108,7 +108,12 @@ Here's a more advanced example where the server dynamically handles routes for i
 
 ### Example: Dynamic Article Route
 
-In this case, the server will render content from Markdown files (e.g., `/content/about.md`) dynamically at a route like `/article/about`. This is done by utilizing route parameters (e.g., `:page`), retrieving the content dynamically based on the route, and rendering it with an HTML template.
+In this case, the server will render content from Markdown files (e.g., `/content/about.md`) dynamically at a route like `/article/about`. This is done by utilizing route parameters (e.g., `[page]`), retrieving the content dynamically based on the route, and rendering it with an HTML template.
+
+```html
+<!-- ./pages/cms-page.html -->
+<div>{{ content }}</div>
+```
 
 ```ts
 import { createServer, getContent, renderFile } from './.sweyn/index.ts'

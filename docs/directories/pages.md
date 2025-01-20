@@ -19,7 +19,7 @@ Sweyn supports **dynamic routing** by using file names wrapped in square bracket
 <h1>Article: {{ slug }}</h1>
 ```
 
-With this setup, when a user navigates to `/article/first-post`, the value of `{{ slug }}` will be `first-post`.
+With this setup, when a user navigates to `/article/first-post`, the value of <code v-pre>{{ slug }}</code> will be `first-post`.
 
 ## Rendering Pages
 

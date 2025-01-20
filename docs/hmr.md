@@ -25,7 +25,7 @@ You can use the `version` variable to generate a random string that will change 
 <link href="/main.css?v={{ version }}" rel="stylesheet" />
 ```
 
-In this example, the `v={{ version }}` query parameter ensures that the browser always fetches the latest version of the `main.css` file. The `version` value is a random string generated each time the server starts.
+In this example, the <code v-pre>v={{ version }}</code> query parameter ensures that the browser always fetches the latest version of the `main.css` file. The `version` value is a random string generated each time the server starts.
 
 When the browser requests the asset, the query parameter (`?v=<random_string>`) will be stripped from the URL when the server reads it, ensuring the correct asset is served.
 

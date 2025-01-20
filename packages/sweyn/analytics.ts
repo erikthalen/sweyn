@@ -15,9 +15,9 @@ type DBRecord = {
 
 type AnalyticsConfig = {
   root?: string
-  admin: {
-    login: string
-    password: string
+  admin?: {
+    login?: string
+    password?: string
   }
 }
 
@@ -35,8 +35,8 @@ export function createAnalytics(config: AnalyticsConfig) {
     route: '/analytics',
     handler: async (req, res) => {
       authenticate(req, res, {
-        username: config.admin.login,
-        password: config.admin.password,
+        username: config.admin?.login || '',
+        password: config.admin?.password || '',
       })
 
       const fileContent = await fs.readFile(
