@@ -154,11 +154,11 @@ async function init(userConfig?: Config) {
    */
   if (!server) {
     server = createServer()
-
-    server.listen(defaults.port, () =>
-      console.log(`http://localhost:${defaults.port}`)
-    )
   }
+
+  server.listen(defaults.port, () =>
+    console.log(`http://localhost:${defaults.port}`)
+  )
 
   watchFilesAdded(() => {
     // cleanup

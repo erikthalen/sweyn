@@ -1,0 +1,59 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('/Inter_18pt-Regular.woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/Inter_18pt-Medium.woff2');
+  font-weight: bold;
+}
+
+:root {
+  font-family: 'Inter', sans-serif;
+  color: #222;
+
+  font-synthesis: style;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-group(root) {
+  animation-duration: 0.2s;
+}
+
+::selection {
+  background-color: color-mix(in oklab, dodgerblue 30%, transparent);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  display: grid;
+  place-content: center;
+  place-items: center;
+  gap: 1rem;
+  min-height: 75vh;
+}
+
+img {
+  vertical-align: middle;
+  max-width: 100%;
+  object-fit: cover;
+}
+
+a {
+  color: dodgerblue;
+}
+
+.logo {
+  width: 2rem;
+}

@@ -52,3 +52,7 @@ main {
 a {
   color: dodgerblue;
 }
+
+.logo {
+  width: 100px;
+}

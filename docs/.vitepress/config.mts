@@ -8,11 +8,13 @@ export default defineConfig({
   cleanUrls: true,
   themeConfig: {
     logo: '/S.svg',
-    nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Guide', link: '/getting-started' },
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/erikthalen/sweyn' },
     ],
-
+    nav: [
+      // { text: 'Home', link: '/' },
+      // { text: 'Guide', link: '/getting-started' },
+    ],
     sidebar: [
       {
         text: 'Guide',
