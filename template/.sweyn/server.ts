@@ -82,8 +82,6 @@ export function createRequestHandler(
     try {
       const result = await callback(req, res)
 
-      if (req.url === '/hmr-update') console.log('HANDLER', res.headersSent)
-
       if (res.headersSent) return
 
       if (result && isReadStream(result)) {
@@ -92,7 +90,11 @@ export function createRequestHandler(
 
         if (contentType) res.setHeader('Content-Type', contentType)
 
-        if (contentType !== 'text/html') {
+        if (
+          contentType !== 'text/html' &&
+          contentType !== 'application/javascript' &&
+          contentType !== 'text/css'
+        ) {
           res.setHeader('Cache-Control', 'max-age=31536000')
         }
 

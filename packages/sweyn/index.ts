@@ -65,7 +65,7 @@ async function init(userConfig?: Config) {
   config = userConfig || config
 
   const defaults = {
-    static: ['app', 'pages', 'sweyn'].concat(config?.static || []),
+    static: ['dist', 'pages'].concat(config?.static || []),
     port: config?.port || 3003,
   }
 

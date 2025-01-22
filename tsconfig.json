@@ -9,5 +9,6 @@
     "target": "es2023",
     "moduleResolution": "nodenext",
     "verbatimModuleSyntax": true
-  }
+  },
+  "exclude": ["template"]
 }

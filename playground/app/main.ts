@@ -20,6 +20,16 @@ document
     )}</code></pre>`
   )
 
-hljs.highlightAll()
+declare global {
+  interface Window {
+    hljs: any
+  }
+}
+
+window.hljs.highlightAll()
 
 console.log(dbData)
+
+console.log('UPDATE!! :)')
+
+export {}

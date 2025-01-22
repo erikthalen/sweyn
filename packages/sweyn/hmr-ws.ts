@@ -5,7 +5,8 @@ import type { RouteHandler } from './types.ts'
 
 const dirs = [
   './index.html',
-  './app',
+  // './app',
+  './dist',
   './public',
   './pages',
   './snippets',
@@ -14,7 +15,7 @@ const dirs = [
 ]
 
 let wss: any = null
-let watcher: FSWatcher | null = null
+let watchers: FSWatcher[] | null = null
 
 export function HMRServer() {
   wss = new WebSocketServer({ port: 8576 })
@@ -25,13 +26,15 @@ export function HMRServer() {
     dirs.forEach(dir => {
       if (!fs.existsSync(dir)) return
 
-      watcher = fs.watch(dir, (eventType, filename) => {
+      const watcher = fs.watch(dir, (eventType, filename) => {
         if (filename === '.DS_Store') return
         refreshAppVersion()
         console.clear()
         console.log('hmr reload:', filename)
         ws.send('reload')
       })
+
+      watchers?.push(watcher)
     })
   })
 }
@@ -70,6 +73,7 @@ export function withHMR(handler: RouteHandler) {
   }
 
   return async (...args: any[]) => {
+    // @ts-ignore
     const response = await handler(...args)
     return injectHMR(response)
   }
@@ -84,9 +88,12 @@ export function disconnectHMR() {
     wss.close()
   }
 
-  if (watcher) {
-    watcher.close()
-    watcher = null
+  if (watchers?.length) {
+    watchers.forEach(watcher => {
+      watcher.close()
+    })
+
+    watchers = null
   }
 }
 

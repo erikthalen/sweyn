@@ -5,12 +5,15 @@
     "node": ">=23"
   },
   "scripts": {
-    "dev": "NODE_ENV=dev node --watch server.config.ts",
+    "dev": "tsc && NODE_ENV=dev node --watch server.config.ts & tsc -w",
     "start": "node server.config.ts"
   },
   "dependencies": {
     "marked": "^15.0.2",
     "sweyn": "workspace:*"
   },
-  "packageManager": "pnpm@9.12.2"
+  "packageManager": "pnpm@9.12.2",
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
 }

@@ -1,9 +1,11 @@
 import fs from 'node:fs/promises'
 
 const rootPackageJSONFile = await fs.readFile('./package.json')
-const rootPackageJSON = JSON.parse(rootPackageJSONFile)
+const rootPackageJSON = JSON.parse(rootPackageJSONFile.toString())
 
-const [major, minor, patch] = rootPackageJSON.version.split('.').map(v => parseInt(v))
+const [major, minor, patch] = rootPackageJSON.version
+  .split('.')
+  .map((v: string) => parseInt(v))
 
 const newVersion = [major, minor, patch + 1].join('.')
 

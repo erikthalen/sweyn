@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
+    "outDir": "dist",
+    "strict": true,
+    "noEmit": false,
     "esModuleInterop": true,
-    "lib": ["ESNext"],
-    "module": "nodenext",
+    "verbatimModuleSyntax": true,
+    "lib": ["ESNext", "dom", "dom.iterable"],
+    "module": "ESNext",
     "target": "es2023",
-    "moduleResolution": "nodenext",
-    "verbatimModuleSyntax": true
-  }
+    "moduleResolution": "bundler"
+  },
+  "files": ["./app/main.ts"],
 }

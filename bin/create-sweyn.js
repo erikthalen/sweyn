@@ -59,6 +59,8 @@ async function copyTemplateFiles(name) {
       indexHTML.replace('<title>sweyn-app</title>', `<title>${name}</title>`)
     )
 
+    await fs.rename(path.join(process.cwd(), name, '_gitignore'), path.join(process.cwd(), name, '.gitignore'))
+
     console.log(
       `${colors.reset + colors.green}✅ Successfully created project in /${
         name + colors.reset

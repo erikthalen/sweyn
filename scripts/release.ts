@@ -8,8 +8,8 @@ const destination = './template'
 const packageJSONSrc = await fs.readFile(path.join(source, 'package.json'))
 const packageJSON = await fs.readFile(path.join(destination, 'package.json'))
 
-const src = JSON.parse(packageJSONSrc)
-const dest = JSON.parse(packageJSON || {})
+const src = JSON.parse(packageJSONSrc.toString())
+const dest = JSON.parse(packageJSON.toString())
 
 /**
  * remove old .sweyn folder
@@ -27,8 +27,20 @@ await fs.writeFile(
     {
       version: src.version,
       ...dest,
-      dependencies: src.dependencies,
-      devDependencies: src.devDependencies,
+      dependencies:
+        dest.dependencies || src.dependencies
+          ? {
+              ...(dest.dependencies || {}),
+              ...(src.dependencies || {}),
+            }
+          : undefined,
+      devDependencies:
+        dest.devDependencies || src.devDependencies
+          ? {
+              ...(dest.devDependencies || {}),
+              ...(src.devDependencies || {}),
+            }
+          : undefined,
     },
     null,
     2
