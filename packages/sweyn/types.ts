@@ -28,7 +28,14 @@ export type RoutesOfMethod = Map<string, RouteHandler | string>
 
 export type Routes = Map<string, RoutesOfMethod>
 
-export type RouteHandlerOptions = Record<string, Record<string, string>>
+export type RouteHandlerOptions = {
+  route: Record<string, string>
+  query: Record<string, string>
+  error: {
+    statusCode: number
+    message: string
+  } | null
+}
 
 export type RouteHandler = (
   req: IncomingMessage,

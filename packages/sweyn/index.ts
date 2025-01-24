@@ -1,5 +1,5 @@
 import path from 'node:path'
-import http, { IncomingMessage, ServerResponse } from 'node:http'
+import http, { type IncomingMessage, type ServerResponse } from 'node:http'
 import fs from 'node:fs/promises'
 import { renderFile, renderVariables, renderLayout } from './renderer.ts'
 // import { destroyHRM, HMRServer, injectHMR, watchFilesAdded } from './hmr.ts'
@@ -34,10 +34,15 @@ export function refreshAppVersion() {
 }
 
 function defaultHandler(filename: string) {
-  return (req: http.IncomingMessage) => {
+  return (
+    req: IncomingMessage,
+    res: ServerResponse,
+    options: RouteHandlerOptions
+  ) => {
     return renderFile(filename, {
       [withoutWildcards(filename)]: req.url?.toString().substring(1),
       version: app.version,
+      ...(options.error || {}),
     })
   }
 }

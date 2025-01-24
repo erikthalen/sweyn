@@ -43,6 +43,7 @@ export default defineConfig({
           { text: 'Database', link: '/database' },
           { text: 'Renderer', link: '/renderer' },
           { text: 'HMR', link: '/hmr' },
+          { text: 'Error', link: '/error' },
         ],
       },
     ],
