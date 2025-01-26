@@ -8,6 +8,7 @@ import {
   isWildcard,
   withoutWildcards,
 } from './routes.ts'
+import type { RouteHandlerOptions } from './types.ts'
 
 const CONTENT_TYPES: Record<string, string> = {
   '.html': 'text/html',
@@ -108,9 +109,22 @@ export function createRequestHandler(
 
       return res.writeHead(200).end(JSON.stringify(result))
     } catch (error) {
-      console.log('error', error)
-      const status = (error as { status: number }).status || 500
-      res.writeHead(status).end(JSON.stringify(error))
+      type ResolvedError = {
+        type: string
+        status: number
+        response: string
+      }
+      const resolvedError = (await Promise.resolve(error)) as ResolvedError
+
+      if (resolvedError?.type === 'error-page') {
+        res
+          .setHeader('Content-Type', 'text/html')
+          .writeHead(resolvedError?.status || 404)
+          .end(resolvedError?.response)
+      } else {
+        const status = (error as { status: number }).status || 500
+        res.writeHead(status).end(JSON.stringify(error))
+      }
     }
   }
 }
@@ -120,41 +134,23 @@ const requestHandler = createRequestHandler(
     const { method, url } = req
     const { pathname, searchParams } = new URL(url || '', 'https://foobar.com')
 
-    // if (req.url === '/hmr-update') {
-    //   console.log('HMR')
-    //   res.writeHead(200, {
-    //     'Content-Type': 'text/event-stream',
-    //     'Cache-Control': 'no-cache',
-    //     Connection: 'keep-alive',
-    //     'Transfer-Encoding': 'chunked',
-    //   })
-
-    //   res.flushHeaders()
-
-    //   res.on('close', () => {
-    //     console.log('closing')
-    //     res.end()
-    //   })
-
-    //   req.on('close', () => {
-    //     console.log('closing')
-    //     res.end()
-    //   })
-    // }
-
     // is request for a static file?
     if (extname(pathname)) {
       return await streamFileFromStaticFolder(pathname)
     }
 
-    const { route, handler } =
-      getMatchingRoute(pathname, method) || getMatchingRoute('error')
+    const result = getMatchingRoute(pathname, method)
+
+    const { route, handler } = result.handler
+      ? result
+      : getMatchingRoute('error')
 
     if (!route || !handler) throw { status: 404, message: 'no route found' }
 
-    const options = {
+    const options: RouteHandlerOptions = {
       query: Object.fromEntries(searchParams),
       route: {},
+      error: null,
     }
 
     const urlParts = asParts(url)
@@ -162,8 +158,7 @@ const requestHandler = createRequestHandler(
 
     routeParts.forEach((part, idx) => {
       if (isWildcard(part)) {
-        ;(options.route as Record<string, string>)[withoutWildcards(part)] =
-          urlParts[idx]
+        options.route[withoutWildcards(part)] = urlParts[idx]
       }
     })
 
@@ -174,6 +169,13 @@ const requestHandler = createRequestHandler(
     })
 
     if (typeof handler === 'string') return handler
+
+    if (route === 'error') {
+      options.error = {
+        statusCode: 404,
+        message: 'Page not found',
+      }
+    }
 
     return handler(req, res, options)
   }

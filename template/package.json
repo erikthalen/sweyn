@@ -6,8 +6,10 @@
     "node": ">=23"
   },
   "scripts": {
-    "dev": "NODE_ENV=dev node --watch server.config.ts & node --watch-path=./app esbuild.config.ts",
-    "start": "node esbuild.config.ts && node server.config.ts"
+    "dev": "NODE_ENV=development node --watch server.config.ts & node --watch-path=./app esbuild.config.ts",
+    "start": "node esbuild.config.ts && node server.config.ts",
+    "deploy-setup": "pm2 deploy production setup",
+    "deploy": "pm2 deploy production"
   },
   "devDependencies": {
     "esbuild": "^0.24.2",

@@ -44,6 +44,7 @@ export default defineConfig({
           { text: 'Renderer', link: '/renderer' },
           { text: 'HMR', link: '/hmr' },
           { text: 'Error', link: '/error' },
+          { text: 'Deployment', link: '/deployment' },
         ],
       },
     ],

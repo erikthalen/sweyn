@@ -77,8 +77,8 @@ export function createCms(options: cmsConfig) {
 
     return renderVariables(index.toString(), {
       pages: menu,
-      content: getContent(opts?.route.page),
-      filename: opts?.route.page,
+      content: getContent(opts?.route.page) || '',
+      filename: opts?.route.page || '',
     })
   }
 

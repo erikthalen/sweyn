@@ -11,6 +11,17 @@ createTable('fresh', {
   name: 'string',
 })
 
+async function createError(error) {
+  return {
+    type: 'error-page',
+    response: await renderFile('error', {
+      statusCode: 404,
+      message: error.message,
+      version: Date.now(),
+    }),
+  }
+}
+
 createServer({
   root: '../packages/sweyn',
   analytics: true,
@@ -21,17 +32,23 @@ createServer({
   routes: [
     {
       route: '/article/[page]',
-      handler: async (req, res, { route }) => {
+      handler: async (req, res, options) => {
+        const content = getContent(options?.route.page)
+
+        if (typeof content !== 'string') {
+          throw createError({ message: 'nooope' })
+        }
+
         return renderFile('cms-page', {
-          content: await marked.parse(getContent(route.page)),
+          content: await marked.parse(content),
           version: Date.now(),
         })
       },
     },
     {
       route: '/erik/[slug]/[bar]',
-      handler: (req, res, { route }) => {
-        return renderFile('[slug]', route)
+      handler: (req, res, options) => {
+        return renderFile('[slug]', options?.route)
       },
     },
   ],

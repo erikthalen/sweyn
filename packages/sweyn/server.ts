@@ -109,9 +109,22 @@ export function createRequestHandler(
 
       return res.writeHead(200).end(JSON.stringify(result))
     } catch (error) {
-      console.log('error', error)
-      const status = (error as { status: number }).status || 500
-      res.writeHead(status).end(JSON.stringify(error))
+      type ResolvedError = {
+        type: string
+        status: number
+        response: string
+      }
+      const resolvedError = (await Promise.resolve(error)) as ResolvedError
+
+      if (resolvedError?.type === 'error-page') {
+        res
+          .setHeader('Content-Type', 'text/html')
+          .writeHead(resolvedError?.status || 404)
+          .end(resolvedError?.response)
+      } else {
+        const status = (error as { status: number }).status || 500
+        res.writeHead(status).end(JSON.stringify(error))
+      }
     }
   }
 }

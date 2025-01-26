@@ -54,6 +54,13 @@ a {
   color: dodgerblue;
 }
 
+@keyframes spin {
+  to {
+    rotate: 180deg;
+  }
+}
+
 .logo {
+  animation: spin 3s infinite linear;
   width: 2rem;
 }

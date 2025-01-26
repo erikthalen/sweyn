@@ -37,18 +37,18 @@ function defaultHandler(filename: string) {
   return (
     req: IncomingMessage,
     res: ServerResponse,
-    options: RouteHandlerOptions
+    options?: RouteHandlerOptions
   ) => {
     return renderFile(filename, {
       [withoutWildcards(filename)]: req.url?.toString().substring(1),
-      version: app.version,
-      ...(options.error || {}),
+      version: app.version.toString(),
+      ...(options?.error || {}),
     })
   }
 }
 
 export function withHMR(handler: RouteHandler | string) {
-  if (process.env.NODE_ENV !== 'dev') {
+  if (process.env.NODE_ENV !== 'development') {
     return handler
   }
 

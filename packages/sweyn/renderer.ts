@@ -1,5 +1,6 @@
 import { readFile } from 'fs/promises'
 import { normalize, join, resolve, extname } from 'path'
+import type { RouteHandlerOptions } from './types.ts'
 
 const DOUBLE_CURLY_BRACKETS = /\{{(.*?)\}}/g // {{ foo }}
 const DOUBLE_SQUARE_BRACKETS = /\[\[(.*?)\]]/g // [[ foo ]]
@@ -10,7 +11,7 @@ let extension = '.html'
 const partialPaths = ['pages', 'snippets']
 const layoutPaths = ['', 'layouts']
 
-const getFile = name => async path => {
+const getFile = (name: string) => async (path: string) => {
   const fileName = extname(name) ? name : name + extension
   return await readFile(join(resolve(path), normalize(fileName)), {
     encoding: 'utf8',
@@ -29,7 +30,7 @@ export const renderLayout = async (fileContent: string, layout = 'index') => {
   }
 }
 
-const renderPartials = async fileString => {
+const renderPartials = async (fileString: string) => {
   const matches = [...fileString.matchAll(DOUBLE_SQUARE_BRACKETS)]
 
   if (!matches.length) return fileString
@@ -55,19 +56,25 @@ const renderPartials = async fileString => {
   return await renderPartials(output)
 }
 
-export const renderVariables = (fileString, data = {}) => {
+export const renderVariables = (
+  fileString: string,
+  data: Record<string, string | number> = {}
+) => {
   const matches = [...fileString.matchAll(DOUBLE_CURLY_BRACKETS)]
 
   if (!matches.length) return fileString
 
   return matches.reduce(
     (acc, [match, variable]) =>
-      acc.replaceAll(match, data[variable.trim()] || ''),
+      acc.replaceAll(match, data[variable.trim()]?.toString() || ''),
     fileString
   )
 }
 
-export const renderFileString = async (fileString, data?) => {
+export const renderFileString = async (
+  fileString: string,
+  data?: Record<string, string | number>
+) => {
   const layout = await renderLayout(fileString)
   const partial = await renderPartials(layout)
   const result = renderVariables(partial, data)
@@ -75,7 +82,10 @@ export const renderFileString = async (fileString, data?) => {
   return result
 }
 
-export const renderFile = async (name, data?): Promise<string> => {
+export const renderFile = async (
+  name: string,
+  data?: Record<string, string | number>
+): Promise<string> => {
   try {
     const filePromises = await Promise.allSettled(
       partialPaths.map(getFile(name))

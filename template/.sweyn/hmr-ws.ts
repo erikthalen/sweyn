@@ -64,7 +64,7 @@ export function injectHMR(str: string) {
 }
 
 export function withHMR(handler: RouteHandler) {
-  if (process.env.NODE_ENV !== 'dev') {
+  if (process.env.NODE_ENV !== 'development') {
     return handler
   }
 
@@ -73,6 +73,7 @@ export function withHMR(handler: RouteHandler) {
   }
 
   return async (...args: any[]) => {
+    // @ts-ignore
     const response = await handler(...args)
     return injectHMR(response)
   }
